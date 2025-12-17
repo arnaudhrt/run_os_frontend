@@ -1,9 +1,13 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 
-import NotFoundPage from "./lib/shared/pages/NotFoundPage";
+import NotFoundPage from "./lib/pages/NotFoundPage";
 import WeekPage from "./features/week/views/WeekPage";
 import LogsPage from "./features/logs/views/LogsPage";
-import YearPage from "./features/year/views/YearPage";
+import SeasonPage from "./features/season/views/SeasonPage";
+import RecordsPage from "./features/records/views/RecordsPage";
+import RegisterPage from "./features/auth/views/RegisterPage";
+import LoginPage from "./features/auth/views/LoginPage";
+import ProtectedRoutes from "./lib/components/ProtectedRoutes";
 
 export const router = createBrowserRouter([
   {
@@ -14,12 +18,35 @@ export const router = createBrowserRouter([
         element: <WeekPage />,
       },
       {
-        path: "year",
-        element: <YearPage />,
+        path: "app",
+        element: <ProtectedRoutes />,
+        children: [
+          {
+            path: "season",
+            element: <SeasonPage />,
+          },
+          {
+            path: "logs",
+            element: <LogsPage />,
+          },
+          {
+            path: "week",
+            element: <WeekPage />,
+          },
+          {
+            path: "records",
+            element: <RecordsPage />,
+          },
+        ],
+      },
+
+      {
+        path: "register",
+        element: <RegisterPage />,
       },
       {
-        path: "logs",
-        element: <LogsPage />,
+        path: "login",
+        element: <LoginPage />,
       },
       {
         path: "404",
