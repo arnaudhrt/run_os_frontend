@@ -4,9 +4,9 @@ import TopBarAvatar from "./TopBarAvatar";
 import { useRef, useState, useLayoutEffect } from "react";
 
 const navLinks = [
-  { to: "/app/season", label: "Season" },
+  { to: "/app/horizon", label: "Horizon" },
   { to: "/app/week", label: "Week" },
-  { to: "/app/logs", label: "Logs" },
+  { to: "/app/ledger", label: "Ledger" },
   { to: "/app/records", label: "Records" },
 ];
 

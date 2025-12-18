@@ -120,7 +120,7 @@ const mockPhases: PhaseModel[] = [
 
 export default function HorizonPage() {
   return (
-    <section className="px-8 py-6">
+    <section className="p-8">
       <TimelineHeader />
       <div className="mt-12">
         <TimelineCanvas races={mockRaces} phases={mockPhases} />

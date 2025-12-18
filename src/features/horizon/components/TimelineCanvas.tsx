@@ -1,5 +1,5 @@
 import { useRef, useEffect, useMemo, useState, useCallback } from "react";
-import { Flag, Trophy, Medal, ChevronLeft, ChevronRight } from "lucide-react";
+import { Flag, Trophy, Medal, ChevronLeft, ChevronRight, Divide } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/lib/ui/tooltip";
 import type { RaceModel } from "../models/race.model";
@@ -8,6 +8,9 @@ import type { PhaseType } from "@/lib/types/type";
 import { ButtonGroup } from "@/lib/ui/button-group";
 import { Button } from "@/lib/ui/button";
 import { NativeSelect, NativeSelectOption } from "@/lib/ui/native-select";
+import { Dialog } from "radix-ui";
+import { RaceDetailsDialog } from "./RaceDetailsDialog";
+import { PhaseDetailsDialog } from "./PhaseDetailsDialog";
 
 interface TimelineCanvasProps {
   races: RaceModel[];
@@ -26,7 +29,7 @@ interface WeekData {
 
 const HEADER_HEIGHT = 64;
 const RACE_TRACK_HEIGHT = 80;
-const PHASE_TRACK_HEIGHT = 100;
+const PHASE_TRACK_HEIGHT = 80;
 const TOTAL_WEEKS = 104; // 2 years
 const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
 
@@ -39,12 +42,12 @@ const ZOOM_CONFIG: Record<ZoomMode, { visibleWeeks: number; label: string }> = {
 const ZOOM_MODES: ZoomMode[] = ["3m", "6m", "9m"];
 
 const phaseColors: Record<PhaseType, { bg: string; border: string; text: string }> = {
-  base: { bg: "bg-blue-100", border: "border-l-blue-500", text: "text-blue-700" },
-  build: { bg: "bg-amber-100", border: "border-l-amber-500", text: "text-amber-700" },
-  peak: { bg: "bg-red-100", border: "border-l-red-500", text: "text-red-700" },
-  taper: { bg: "bg-purple-100", border: "border-l-purple-500", text: "text-purple-700" },
-  recovery: { bg: "bg-green-100", border: "border-l-green-500", text: "text-green-700" },
-  off: { bg: "bg-zinc-100", border: "border-l-zinc-400", text: "text-zinc-600" },
+  base: { bg: "bg-blue-50", border: "border-blue-500", text: "text-blue-900" },
+  build: { bg: "bg-amber-50", border: "border-amber-500", text: "text-amber-900" },
+  peak: { bg: "bg-red-50", border: "border-red-500", text: "text-red-900" },
+  taper: { bg: "bg-purple-50", border: "border-purple-500", text: "text-purple-900" },
+  recovery: { bg: "bg-green-50", border: "border-green-500", text: "text-green-900" },
+  off: { bg: "bg-zinc-50", border: "border-zinc-500", text: "text-zinc-900" },
 };
 
 const priorityIcons: Record<1 | 2 | 3, typeof Trophy> = {
@@ -96,6 +99,10 @@ function generateYearOptions(currentYear: number): number[] {
 }
 
 export default function TimelineCanvas({ races, phases }: TimelineCanvasProps) {
+  const [openRaceDetails, setOpenRaceDetails] = useState(false);
+  const [openPhaseDetails, setOpenPhaseDetails] = useState(false);
+  const [selectedRace, setSelectedRace] = useState<RaceModel | null>(null);
+  const [selectedPhase, setSelectedPhase] = useState<PhaseModel | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -220,7 +227,16 @@ export default function TimelineCanvas({ races, phases }: TimelineCanvasProps) {
 
       {/* Timeline */}
       <div ref={containerRef} className="relative w-full overflow-hidden rounded-lg border border-zinc-200 bg-white">
-        <div ref={scrollRef} className="overflow-x-auto scrollbar-thin scrollbar-track-zinc-100 scrollbar-thumb-zinc-300">
+        <div className="absolute top-0 left-0 bottom-0 z-50 bg-white border-r border-zinc-200">
+          <div style={{ height: HEADER_HEIGHT, width: "30px" }} className="border-b "></div>
+          <div style={{ height: RACE_TRACK_HEIGHT, width: "30px" }} className="border-b flex justify-center items-center">
+            <p className="text-xs text-muted-foreground font-medium -rotate-90">Races</p>
+          </div>
+          <div style={{ height: PHASE_TRACK_HEIGHT, width: "30px" }} className="border-b flex justify-center items-center">
+            <p className="text-xs text-muted-foreground font-medium -rotate-90">Training</p>
+          </div>
+        </div>
+        <div ref={scrollRef} className="overflow-x-auto scrollbar-thin scrollbar-track-slate-50 scrollbar-thumb-slate-300">
           <div className="relative" style={{ width: totalWidth, minWidth: "100%" }}>
             {/* Header Track - Ruler */}
             <div className="sticky top-0 z-20 border-b border-zinc-200 bg-white/95 backdrop-blur-sm" style={{ height: HEADER_HEIGHT }}>
@@ -266,7 +282,7 @@ export default function TimelineCanvas({ races, phases }: TimelineCanvasProps) {
                   <>
                     <div
                       className={cn(
-                        "absolute top-[43px] bottom-0 w-0.5 bg-slate-700",
+                        "absolute top-[53px] bottom-0 w-0.5 bg-slate-700",
                         race.priority === 1 && "bg-amber-500",
                         race.priority === 2 && "bg-slate-600",
                         race.priority === 3 && "bg-slate-300",
@@ -275,22 +291,23 @@ export default function TimelineCanvas({ races, phases }: TimelineCanvasProps) {
                       style={{ left: position }}
                     ></div>
                     <div
-                      className={cn(
-                        "absolute top-0 -translate-x-1/2 flex flex-col items-center gap-0.5 transition-transform hover:scale-110",
-                        isPast && "opacity-50"
-                      )}
+                      className={cn("absolute top-0 -translate-x-1/2 flex flex-col items-center gap-0.5 cursor-pointer", isPast && "opacity-50")}
                       style={{ left: position + 1 }}
+                      onClick={() => {
+                        setSelectedRace(race);
+                        setOpenRaceDetails(true);
+                      }}
                     >
                       <span className="max-w-20 truncate text-[10px] font-medium text-zinc-600">{race.name}</span>
                       <div
                         className={cn(
-                          "flex h-7 w-7 items-center justify-center rounded-full border-2",
+                          "flex size-9 items-center justify-center rounded-full border-2 transition-transform hover:scale-110",
                           race.priority === 1 && "border-amber-500 bg-amber-100 text-amber-600",
                           race.priority === 2 && "border-slate-600 bg-slate-100 text-slate-600",
                           race.priority === 3 && "border-slate-300 bg-slate-50 text-slate-500"
                         )}
                       >
-                        <Icon className="h-3.5 w-3.5" />
+                        <Icon className="size-4" />
                       </div>
                     </div>
                   </>
@@ -303,7 +320,7 @@ export default function TimelineCanvas({ races, phases }: TimelineCanvasProps) {
               {/* Week grid lines */}
               <div className="absolute inset-0 flex">
                 {weeks.map((_, index) => (
-                  <div key={index} className="border-r border-zinc-100" style={{ width: weekWidth, minWidth: weekWidth }} />
+                  <div key={index} className="border-l border-zinc-100" style={{ width: weekWidth, minWidth: weekWidth }} />
                 ))}
               </div>
 
@@ -318,49 +335,70 @@ export default function TimelineCanvas({ races, phases }: TimelineCanvasProps) {
                 const isPast = new Date(phase.end_date) < today;
 
                 return (
-                  <Tooltip key={phase.id}>
-                    <TooltipTrigger asChild>
-                      <button
-                        type="button"
-                        className={cn(
-                          "absolute top-2 bottom-2 rounded-r-md border-l-4 transition-all hover:brightness-95",
-                          colors.bg,
-                          colors.border,
-                          isPast && "opacity-50"
-                        )}
-                        style={{
-                          left: Math.max(0, position),
-                          width: Math.max(40, width),
-                        }}
-                      >
-                        <div className="flex h-full items-center px-2">
-                          <span className={cn("text-xs font-medium capitalize truncate", colors.text)}>{phase.phase_type}</span>
+                  <div
+                    className={cn(
+                      "absolute top-2 bottom-2 rounded  border-t border-r border-b border-l-4 transition-all",
+                      colors.bg,
+                      colors.border,
+                      isPast && "opacity-50"
+                    )}
+                    key={phase.id}
+                    style={{
+                      left: Math.max(0, position),
+                      width: Math.max(40, width),
+                    }}
+                    title={`${phase.phase_type} - ${phase.weekly_volume_target_km}km, ${phase.weekly_elevation_target_m}m elevation`}
+                    onClick={() => {
+                      setSelectedPhase(phase);
+                      setOpenPhaseDetails(true);
+                    }}
+                  >
+                    <div className={cn("h-full gap-0.5 py-2 px-3")}>
+                      <span className={cn("font-semibold capitalize truncate text-sm", colors.text)}>{phase.phase_type}</span>
+
+                      {width > 170 && (
+                        <div className={cn("text-xs space-y-0.5", colors.text, "opacity-80", "flex gap-5")}>
+                          {phase.weekly_elevation_target_m && phase.weekly_elevation_target_m > 0 && (
+                            <div className="flex items-center gap-1">
+                              <span>Volume: {phase.weekly_volume_target_km} km/wk</span>
+                            </div>
+                          )}
+                          {phase.weekly_elevation_target_m && phase.weekly_elevation_target_m > 0 && (
+                            <div className="flex items-center gap-1">
+                              <span>Elevation: {phase.weekly_elevation_target_m} m/wk</span>
+                            </div>
+                          )}
                         </div>
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top">
-                      <div className="space-y-1">
-                        <p className="font-semibold capitalize">{phase.phase_type} Phase</p>
-                        <p className="text-zinc-400">
-                          {formatDate(phase.start_date)} - {formatDate(phase.end_date)}
-                        </p>
-                        {phase.description && <p className="max-w-[200px] text-zinc-500">{phase.description}</p>}
-                      </div>
-                    </TooltipContent>
-                  </Tooltip>
+                      )}
+                      {width > 120 && width < 170 && (
+                        <div className={cn("text-xs space-y-0.5", colors.text, "opacity-80", "flex gap-5")}>
+                          <div className="flex items-center gap-1">
+                            <span>Volume: {phase.weekly_volume_target_km} km/wk...</span>
+                          </div>
+                        </div>
+                      )}
+                      {width < 120 && (
+                        <div className={cn("text-xs space-y-0.5", colors.text, "opacity-80", "flex gap-5")}>
+                          <div className="flex items-center gap-1">
+                            <span>Volume...</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 );
               })}
             </div>
 
             {/* Today Line */}
-            <div className="absolute top-0 bottom-0 z-30 w-0.5 bg-orange-500" style={{ left: todayOffset }}>
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 rounded-b bg-orange-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
-                TODAY
-              </div>
+            <div className="absolute top-2 bottom-0 z-30 w-0.5 bg-blue-500" style={{ left: todayOffset }}>
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 rounded bg-blue-500 px-2 py-1 text-[10px] font-bold text-white">TODAY</div>
             </div>
           </div>
         </div>
       </div>
+      <RaceDetailsDialog open={openRaceDetails} onOpenChange={setOpenRaceDetails} race={selectedRace} />
+      <PhaseDetailsDialog open={openPhaseDetails} onOpenChange={setOpenPhaseDetails} phase={selectedPhase} />
     </div>
   );
 }

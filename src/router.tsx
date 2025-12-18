@@ -2,12 +2,12 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 
 import NotFoundPage from "./lib/pages/NotFoundPage";
 import WeekPage from "./features/week/views/WeekPage";
-import LogsPage from "./features/logs/views/LogsPage";
-import SeasonPage from "./features/horizon/views/HorizonPage";
 import RecordsPage from "./features/records/views/RecordsPage";
 import RegisterPage from "./features/auth/views/RegisterPage";
 import LoginPage from "./features/auth/views/LoginPage";
 import ProtectedRoutes from "./lib/components/ProtectedRoutes";
+import HorizonPage from "./features/horizon/views/HorizonPage";
+import LedgerPage from "./features/ledger/views/LogsPage";
 
 export const router = createBrowserRouter([
   {
@@ -22,12 +22,12 @@ export const router = createBrowserRouter([
         element: <ProtectedRoutes />,
         children: [
           {
-            path: "season",
-            element: <SeasonPage />,
+            path: "horizon",
+            element: <HorizonPage />,
           },
           {
-            path: "logs",
-            element: <LogsPage />,
+            path: "ledger",
+            element: <LedgerPage />,
           },
           {
             path: "week",
