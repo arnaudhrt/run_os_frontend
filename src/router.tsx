@@ -3,7 +3,7 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 import NotFoundPage from "./lib/pages/NotFoundPage";
 import WeekPage from "./features/week/views/WeekPage";
 import LogsPage from "./features/logs/views/LogsPage";
-import SeasonPage from "./features/season/views/SeasonPage";
+import SeasonPage from "./features/horizon/views/HorizonPage";
 import RecordsPage from "./features/records/views/RecordsPage";
 import RegisterPage from "./features/auth/views/RegisterPage";
 import LoginPage from "./features/auth/views/LoginPage";
