@@ -5,9 +5,11 @@ import { Outlet, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/features/auth/stores/auth.store";
 import { auth } from "../firebase/config";
 import Navbar from "./Navbar";
+import { useAuthController } from "@/features/auth/controllers/auth.controller";
 
 export default function ProtectedRoutes() {
-  const { user, setUser } = useAuthStore();
+  const { authUser, setAuthUser, setDbUser } = useAuthStore();
+  const { handleFetchUser } = useAuthController();
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -15,13 +17,18 @@ export default function ProtectedRoutes() {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       try {
         if (user) {
-          setUser(user);
+          setAuthUser(user);
+          const dbUser = await handleFetchUser();
+          console.log(dbUser);
+          setDbUser(dbUser);
         } else {
-          setUser(null);
+          setAuthUser(null);
+          setDbUser(null);
         }
       } catch (error) {
         console.error(error);
-        setUser(null);
+        setAuthUser(null);
+        setDbUser(null);
       } finally {
         setLoading(false);
       }
@@ -52,7 +59,7 @@ export default function ProtectedRoutes() {
     );
   }
 
-  if (!loading && !user) {
+  if (!loading && !authUser) {
     navigate("/login");
     return null;
   }

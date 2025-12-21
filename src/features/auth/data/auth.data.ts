@@ -1,7 +1,27 @@
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, signOut, type UserCredential } from "firebase/auth";
 import { auth, googleProvider } from "@/lib/firebase/config";
 import { sendPasswordResetEmail } from "firebase/auth";
-import type { CreateUserModel } from "../models/auth.model";
+import type { CreateUserModel, UserModel } from "../models/auth.model";
+
+export async function getUser({ token }: { token: string }): Promise<UserModel | null> {
+  const url = new URL(`${import.meta.env.VITE_API_URL}/v1/auth/user`);
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    console.error(response);
+    throw new Error("Error fetching user, check logs for more details");
+  }
+  const responseData = await response.json();
+
+  return responseData.data;
+}
 
 export async function registerEmail(email: string, password: string): Promise<UserCredential> {
   const useCredentials = await createUserWithEmailAndPassword(auth, email, password);

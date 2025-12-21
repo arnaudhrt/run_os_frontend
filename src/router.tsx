@@ -7,7 +7,8 @@ import RegisterPage from "./features/auth/views/RegisterPage";
 import LoginPage from "./features/auth/views/LoginPage";
 import ProtectedRoutes from "./lib/components/ProtectedRoutes";
 import HorizonPage from "./features/horizon/views/HorizonPage";
-import LedgerPage from "./features/ledger/views/LogsPage";
+import LedgerPage from "./features/ledger/views/LedgerPage";
+import ProfilePage from "./features/profile/views/ProfilePage";
 
 export const router = createBrowserRouter([
   {
@@ -36,6 +37,10 @@ export const router = createBrowserRouter([
           {
             path: "records",
             element: <RecordsPage />,
+          },
+          {
+            path: "profile",
+            element: <ProfilePage />,
           },
         ],
       },

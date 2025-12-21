@@ -1,13 +1,16 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { registerUserInDatabase, sentForgotPasswordEmail, login, loginWithGoogle, logout, registerEmail } from "../data/auth.data";
+import { registerUserInDatabase, sentForgotPasswordEmail, login, loginWithGoogle, logout, registerEmail, getUser } from "../data/auth.data";
 import { verifyRegisterEmailFields, verifyForgotPasswordFields } from "../utils/auth.validation";
 import { updateProfile } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import { handleError } from "@/lib/errors/clientErrors.handler";
-import type { CreateUserModel } from "../models/auth.model";
+import type { CreateUserModel, UserModel } from "../models/auth.model";
+import { getFreshIdToken } from "@/lib/firebase/token";
+import { useAuthStore } from "@/features/auth/stores/auth.store";
 
 interface LoadingState {
+  get: boolean;
   email: boolean;
   google: boolean;
   logout: boolean;
@@ -16,14 +19,36 @@ interface LoadingState {
 
 export const useAuthController = () => {
   const navigate = useNavigate();
+  const { setDbUser } = useAuthStore();
   const [validationsErrors, setValidationsErrors] = useState<Record<string, string> | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [user, setUser] = useState<UserModel | null>(null);
   const [loading, setLoading] = useState<LoadingState>({
+    get: false,
     email: false,
     google: false,
     logout: false,
     forgotPassword: false,
   });
+
+  const handleFetchUser = async (): Promise<UserModel | null> => {
+    setLoading((prev) => ({ ...prev, get: true }));
+    setApiError(null);
+
+    try {
+      const token = await getFreshIdToken();
+      const userData = await getUser({ token });
+      setUser(user);
+      setDbUser(userData);
+      return userData;
+    } catch (err) {
+      const errorMessage = handleError(err);
+      setApiError(errorMessage);
+      return null;
+    } finally {
+      setLoading((prev) => ({ ...prev, get: false }));
+    }
+  };
 
   const handleRegisterWithEmail = async ({
     firstName,
@@ -164,11 +189,13 @@ export const useAuthController = () => {
   };
 
   return {
+    handleFetchUser,
     handleLoginWithEmail,
     handleLoginWithGoogle,
     handleLogout,
     handleRegisterWithEmail,
     handleForgotPassword,
+    user,
     validationsErrors,
     apiError,
     loading,
