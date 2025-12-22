@@ -1,3 +1,6 @@
+import type { RPE } from "@/lib/types/type";
+import type { ActivityModel, DayEntry, WeekEntry, MonthEntry, YearEntry, StructuredActivitiesLog } from "../models/activity.model";
+
 export function formatDistance(meters: number): string {
   const km = meters / 1000;
   return `${km.toFixed(1)} km`;
@@ -50,4 +53,254 @@ export function formatWorkoutType(type: string): string {
     .split("_")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
+}
+
+export function speedToPace(speedMs: number): number | null {
+  if (speedMs <= 0) return null;
+
+  // 1 km = 1000 meters
+  // pace (min/km) = 1000 / speed (m/s) / 60 (to convert seconds to minutes)
+  const paceMinPerKm = 1000 / speedMs / 60;
+
+  return Number(paceMinPerKm.toFixed(2));
+}
+
+export function speedToPaceFormatted(speedMs: number): string | null {
+  const pace = speedToPace(speedMs);
+  if (pace === null) return null;
+
+  const minutes = Math.floor(pace);
+  const seconds = Math.round((pace - minutes) * 60);
+
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+}
+
+export function formatRpe(rpe: RPE | undefined): string {
+  if (!rpe) return "-";
+  switch (rpe) {
+    case 1:
+      return "1 😀";
+    case 2:
+      return "2 🙂";
+    case 3:
+      return "3 😐";
+    case 4:
+      return "4 😰";
+    case 5:
+      return "5 🥵";
+    default:
+      return "-";
+  }
+}
+
+export function completeWeekDays(week: WeekEntry): (DayEntry & { isOutsideMonth: boolean })[] {
+  const existingDays = week.days || [];
+
+  // If already 7 days, just add the flag as false
+  if (existingDays.length === 7) {
+    return existingDays.map((d) => ({ ...d, isOutsideMonth: false }));
+  }
+
+  const completeDays: (DayEntry & { isOutsideMonth: boolean })[] = [];
+  const startDate = new Date(week.startDate);
+
+  // Generate all 7 days of the week
+  for (let i = 0; i < 7; i++) {
+    const currentDate = new Date(startDate);
+    currentDate.setDate(startDate.getDate() + i);
+    const dateStr = currentDate.toISOString().split("T")[0];
+
+    const existingDay = existingDays.find((d) => d.date === dateStr);
+
+    if (existingDay) {
+      completeDays.push({ ...existingDay, isOutsideMonth: false });
+    } else {
+      completeDays.push({
+        date: dateStr,
+        dayOfWeek: currentDate.getDay(),
+        isRestDay: false,
+        activities: null,
+        isOutsideMonth: true,
+      });
+    }
+  }
+
+  // Sort descending (Sunday first, Monday last)
+  return completeDays.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+}
+
+type BaseTotals = WeekEntry["totals"];
+type YearTotals = YearEntry["totals"];
+
+interface InternalWeek extends Omit<WeekEntry, "days"> {
+  days: DayEntry[];
+}
+
+interface InternalMonth extends Omit<MonthEntry, "weeks" | "totals"> {
+  weeks: Map<string, InternalWeek>;
+  totals: BaseTotals;
+}
+
+interface InternalYear extends Omit<YearEntry, "months" | "totals"> {
+  months: Map<number, InternalMonth>;
+  totals: YearTotals;
+}
+
+const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+/** * Helper: Formats a Date object to YYYY-MM-DD using LOCAL time
+ * to ensure activities align with the user's local calendar day.
+ */
+function toLocalDateString(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function getISOWeekNumber(date: Date): number {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+}
+
+function getWeekStart(date: Date): Date {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  return new Date(d.setDate(diff));
+}
+
+function getWeekEnd(date: Date): Date {
+  const start = getWeekStart(date);
+  return new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6);
+}
+
+const createBaseTotals = (): BaseTotals => ({
+  distance_meters: 0,
+  duration_seconds: 0,
+  elevation_gain_meters: 0,
+  activities_count: 0,
+});
+
+const createYearTotals = (): YearTotals => ({
+  ...createBaseTotals(),
+  races_count: 0,
+});
+
+export function structureActivitiesLog(activities: ActivityModel[], minDateStr: string | null, maxDateStr: string | null): StructuredActivitiesLog {
+  const emptyResult: StructuredActivitiesLog = { years: [], totals: createYearTotals() };
+  if (!minDateStr || !maxDateStr || activities.length === 0) return emptyResult;
+
+  // 1. Map activities by local date key
+  const activitiesByDate = new Map<string, ActivityModel[]>();
+  activities.forEach((act) => {
+    const key = toLocalDateString(new Date(act.start_time));
+    const group = activitiesByDate.get(key) || [];
+    group.push(act);
+    activitiesByDate.set(key, group);
+  });
+
+  const globalTotals = createYearTotals();
+  const yearsMap = new Map<number, InternalYear>();
+
+  const current = getWeekStart(new Date(minDateStr));
+  const endLimit = getWeekEnd(new Date(maxDateStr));
+
+  // 2. Main Building Loop
+  while (current <= endLimit) {
+    const yearNum = current.getFullYear();
+    const monthNum = current.getMonth() + 1;
+    const dateStr = toLocalDateString(current);
+
+    // Ensure Year exists
+    if (!yearsMap.has(yearNum)) {
+      yearsMap.set(yearNum, { year: yearNum, months: new Map(), totals: createYearTotals() });
+    }
+    const yearData = yearsMap.get(yearNum)!;
+
+    // Ensure Month exists
+    if (!yearData.months.has(monthNum)) {
+      yearData.months.set(monthNum, {
+        month: monthNum,
+        monthName: MONTH_NAMES[monthNum - 1],
+        weeks: new Map(),
+        totals: createBaseTotals(),
+      });
+    }
+    const monthData = yearData.months.get(monthNum)!;
+
+    // Ensure Week exists
+    const weekStartStr = toLocalDateString(getWeekStart(current));
+    if (!monthData.weeks.has(weekStartStr)) {
+      monthData.weeks.set(weekStartStr, {
+        weekNumber: getISOWeekNumber(current),
+        startDate: weekStartStr,
+        endDate: toLocalDateString(getWeekEnd(current)),
+        days: [],
+        totals: createBaseTotals(),
+      });
+    }
+    const weekData = monthData.weeks.get(weekStartStr)!;
+
+    // Create Day Entry
+    const dayActivities = activitiesByDate.get(dateStr) || null;
+    const dayEntry: DayEntry = {
+      date: dateStr,
+      dayOfWeek: current.getDay(),
+      isRestDay: !dayActivities || dayActivities.length === 0,
+      activities: dayActivities,
+      isOutsideMonth: current.getMonth() + 1 !== monthNum,
+    };
+    weekData.days.push(dayEntry);
+
+    // Update Totals
+    dayActivities?.forEach((act) => {
+      const targets = [weekData.totals, monthData.totals, yearData.totals, globalTotals];
+      targets.forEach((t) => {
+        t.distance_meters += act.distance_meters || 0;
+        t.duration_seconds += act.duration_seconds || 0;
+        t.elevation_gain_meters += act.elevation_gain_meters || 0;
+        t.activities_count += 1;
+      });
+      if (act.workout_type === "race") {
+        yearData.totals.races_count += 1;
+        globalTotals.races_count += 1;
+      }
+    });
+
+    current.setDate(current.getDate() + 1);
+  }
+
+  // 3. Transformation & Pruning (Maps -> Arrays -> Nulls)
+  const years: YearEntry[] = Array.from(yearsMap.values())
+    .map((y): YearEntry => {
+      const months: MonthEntry[] = Array.from(y.months.values())
+        .map((m): MonthEntry => {
+          const weeks: WeekEntry[] = Array.from(m.weeks.values())
+            .map(
+              (w): WeekEntry => ({
+                ...w,
+                days: w.totals.activities_count === 0 ? null : w.days.sort((a, b) => b.date.localeCompare(a.date)),
+              })
+            )
+            .sort((a, b) => b.startDate.localeCompare(a.startDate));
+
+          return {
+            ...m,
+            weeks: m.totals.activities_count === 0 ? null : weeks,
+          };
+        })
+        .sort((a, b) => b.month - a.month);
+
+      return {
+        ...y,
+        months: y.totals.activities_count === 0 ? null : months,
+      };
+    })
+    .sort((a, b) => b.year - a.year);
+
+  return { years, totals: globalTotals };
 }

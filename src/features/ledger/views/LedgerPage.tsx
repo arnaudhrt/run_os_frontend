@@ -4,7 +4,7 @@ import YearSection from "../components/YearSection";
 import { useLedgerController } from "../controllers/ledger.controller";
 
 export default function Ledger() {
-  const { handleSyncGarmin, loading, structuredActivitiesLog } = useLedgerController();
+  const { handleSyncGarmin, loading, structuredActivitiesLog, handleUpdateActivity } = useLedgerController();
   if (!structuredActivitiesLog) {
     return <div>Loading...</div>;
   }
@@ -21,13 +21,13 @@ export default function Ledger() {
           distance={structuredActivitiesLog.totals.distance_meters}
           duration={structuredActivitiesLog.totals.duration_seconds}
           elevation={structuredActivitiesLog.totals.elevation_gain_meters}
-          raceCount={structuredActivitiesLog.totals.activitiesCount}
+          raceCount={structuredActivitiesLog.totals.races_count}
           className="bg-slate-50/50"
         />
       </header>
       <TableFilters garminSync={handleSyncGarmin} loading={loading} />
       {structuredActivitiesLog.years.map((year) => (
-        <YearSection key={year.year} yearEntry={year} />
+        <YearSection key={year.year} yearEntry={year} handleUpdateActivity={handleUpdateActivity} loading={loading} />
       ))}
     </div>
   );

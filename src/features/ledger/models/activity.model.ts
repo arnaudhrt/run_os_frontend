@@ -1,45 +1,69 @@
-import type { ActivityType, WorkoutType } from "@/lib/types/type";
+import type { ActivitySource, ActivityType, RPE, TrainingEffectLabel, WorkoutType } from "@/lib/types/type";
 
 export interface ActivityModel {
   id: string;
   user_id: string;
+  source: ActivitySource;
+  garmin_activity_id?: string;
+  strava_activity_id?: number;
+
   activity_type: ActivityType;
   workout_type: WorkoutType;
   start_time: string;
 
-  // Metrics
   distance_meters?: number;
   duration_seconds?: number;
+  elapsed_duration_seconds?: number;
+
   elevation_gain_meters?: number;
   elevation_loss_meters?: number;
 
-  // Heart rate
   avg_heart_rate?: number;
   max_heart_rate?: number;
 
-  // Pace
-  avg_pace_min_per_km?: number;
-  best_pace_min_per_km?: number;
+  avg_speed_mps?: number;
+  max_speed_mps?: number;
 
-  // Cadence
+  steps?: number;
   avg_cadence?: number;
 
-  // User inputs
-  rpe?: number;
-  notes?: string;
+  calories?: number;
 
-  // Weather
+  aerobic_training_effect?: number;
+  anaerobic_training_effect?: number;
+  training_effect_label?: TrainingEffectLabel;
+
+  time_in_zone_1?: number;
+  time_in_zone_2?: number;
+  time_in_zone_3?: number;
+  time_in_zone_4?: number;
+  time_in_zone_5?: number;
+
   avg_temperature_celsius?: number;
+
+  is_pr?: boolean;
+
+  rpe?: RPE;
+  notes?: string;
 
   created_at: string;
   updated_at: string;
 }
 
+export interface ActivitiesResponse {
+  activities: ActivityModel[];
+  min_date: string;
+  max_date: string;
+}
+
+export type UpdateActivityModel = Partial<Omit<ActivityModel, "id" | "user_id" | "created_at" | "updated_at">>;
+
 export interface DayEntry {
   date: string; // ISO date string (YYYY-MM-DD)
   dayOfWeek: number; // 0-6 (Sunday-Saturday)
   isRestDay: boolean;
-  activity: ActivityModel | null;
+  activities: ActivityModel[] | null;
+  isOutsideMonth?: boolean;
 }
 
 export interface WeekEntry {
@@ -51,7 +75,7 @@ export interface WeekEntry {
     distance_meters: number;
     duration_seconds: number;
     elevation_gain_meters: number;
-    activitiesCount: number;
+    activities_count: number;
   };
 }
 
@@ -63,7 +87,7 @@ export interface MonthEntry {
     distance_meters: number;
     duration_seconds: number;
     elevation_gain_meters: number;
-    activitiesCount: number;
+    activities_count: number;
   };
 }
 
@@ -74,7 +98,8 @@ export interface YearEntry {
     distance_meters: number;
     duration_seconds: number;
     elevation_gain_meters: number;
-    activitiesCount: number;
+    activities_count: number;
+    races_count: number;
   };
 }
 
@@ -84,6 +109,7 @@ export interface StructuredActivitiesLog {
     distance_meters: number;
     duration_seconds: number;
     elevation_gain_meters: number;
-    activitiesCount: number;
+    activities_count: number;
+    races_count: number;
   };
 }

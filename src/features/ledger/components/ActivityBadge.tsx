@@ -10,7 +10,6 @@ export function ActivityBadge({ type }: ActivityBadgeProps) {
   const styles: Record<ActivityType, { label: string; className: string }> = {
     run: {
       label: "run",
-
       className: "bg-orange-100 text-orange-700 hover:bg-orange-100 border-transparent",
     },
     trail: {
@@ -45,12 +44,16 @@ export function ActivityBadge({ type }: ActivityBadgeProps) {
       label: "xt",
       className: "bg-purple-100 text-purple-700 hover:bg-purple-100 border-transparent",
     },
+    rest_day: {
+      label: "rest",
+      className: "bg-slate-600 text-white hover:bg-slate-600 border-transparent",
+    },
   };
 
   const { label, className } = styles[type] || styles.run;
 
   return (
-    <Badge variant="outline" className={`text-[10px] leading-0 font-medium uppercase tracking-wider ${className}`}>
+    <Badge variant="outline" className={`text-xs font-medium uppercase tracking-wider ${className}`}>
       {label}
     </Badge>
   );

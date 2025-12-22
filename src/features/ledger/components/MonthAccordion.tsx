@@ -1,11 +1,20 @@
 import { AccordionContent, AccordionItem, AccordionTrigger } from "@/lib/ui/accordion";
-import { formatDistance, formatDuration, formatElevation } from "../utils/format";
-import type { ActivityModel, MonthEntry } from "../models/activity.model";
+import { completeWeekDays, formatDistance, formatDuration, formatElevation } from "../utils/format";
+import type { MonthEntry } from "../models/activity.model";
 import ActivityTable from "./ActivityTable";
 import { Map, Mountain, Timer } from "lucide-react";
 import { format } from "date-fns";
+import type { LoadingState, UpdateActivityParams } from "../controllers/ledger.controller";
 
-export default function MonthAccordion({ monthEntry }: { monthEntry: MonthEntry }) {
+export default function MonthAccordion({
+  monthEntry,
+  handleUpdateActivity,
+  loading,
+}: {
+  monthEntry: MonthEntry;
+  handleUpdateActivity: (params: UpdateActivityParams) => void;
+  loading: LoadingState;
+}) {
   if (!monthEntry.weeks) return null;
 
   return (
@@ -29,23 +38,27 @@ export default function MonthAccordion({ monthEntry }: { monthEntry: MonthEntry 
               </div>
             )}
 
-            <span className="text-primary font-bold">{monthEntry.totals.activitiesCount} Activities</span>
+            <span className="text-primary font-bold">{monthEntry.totals.activities_count} Activities</span>
           </div>
         </div>
       </AccordionTrigger>
       <AccordionContent>
         <div className="space-y-6 pt-2 pb-6">
-          {monthEntry.weeks.map((week, idx) => (
-            <div key={idx} className="space-y-2">
-              <div className="flex items-center gap-2 px-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Week {week.weekNumber} ({format(week.startDate, "EEE do")} → {format(week.endDate, "EEE do")})
-                </span>
-                <div className="h-px flex-1 bg-border" />
+          {monthEntry.weeks.map((week, idx) => {
+            const completedDays = completeWeekDays(week);
+
+            return (
+              <div key={idx} className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-foreground/90">
+                    Week {week.weekNumber} ({format(week.startDate, "EEE do")} → {format(week.endDate, "EEE do")})
+                  </span>
+                  <div className="h-px flex-1 bg-border" />
+                </div>
+                <ActivityTable week={week} days={completedDays} handleUpdateActivity={handleUpdateActivity} loading={loading} />
               </div>
-              <ActivityTable activities={week.days?.map((d) => d.activity).filter(Boolean) as ActivityModel[]} />
-            </div>
-          ))}
+            );
+          })}
         </div>
       </AccordionContent>
     </AccordionItem>

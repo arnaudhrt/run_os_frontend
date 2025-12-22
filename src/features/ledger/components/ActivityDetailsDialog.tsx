@@ -3,7 +3,15 @@ import { Dialog, DialogContent, DialogTitle } from "@/lib/ui/dialog";
 import { Badge } from "@/lib/ui/badge";
 import { Separator } from "@/lib/ui/separator";
 import { Timer, TrendingUp, Heart, Zap, Thermometer, FileText, Activity, ArrowDown } from "lucide-react";
-import { formatDistance, formatDuration, formatPace, formatElevation, formatAvgMaxHR, formatDate, formatWorkoutType } from "../utils/format"; // Adjust path as needed
+import {
+  formatDistance,
+  formatDuration,
+  formatElevation,
+  formatAvgMaxHR,
+  formatDate,
+  formatWorkoutType,
+  speedToPaceFormatted,
+} from "../utils/format"; // Adjust path as needed
 import type { ActivityModel } from "../models/activity.model";
 
 interface ActivityDetailsDialogProps {
@@ -43,7 +51,7 @@ export function ActivityDetailsDialog({ activity, open, onOpenChange }: Activity
             </div>
             <div className="space-y-1">
               <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Avg Pace</p>
-              <p className="text-2xl font-bold">{formatPace(activity.avg_pace_min_per_km)}</p>
+              <p className="text-2xl font-bold">{activity.avg_speed_mps ? speedToPaceFormatted(activity.avg_speed_mps) : "-"}</p>
             </div>
           </div>
 
@@ -62,7 +70,11 @@ export function ActivityDetailsDialog({ activity, open, onOpenChange }: Activity
                   value={formatAvgMaxHR(activity.avg_heart_rate, activity.max_heart_rate)}
                   icon={<Heart className="w-4 h-4" />}
                 />
-                <StatRow label="Best Pace" value={formatPace(activity.best_pace_min_per_km)} icon={<Timer className="w-4 h-4" />} />
+                <StatRow
+                  label="Best Pace"
+                  value={activity.avg_speed_mps ? speedToPaceFormatted(activity.avg_speed_mps) ?? "-" : "-"}
+                  icon={<Timer className="w-4 h-4" />}
+                />
                 <StatRow
                   label="Avg Cadence"
                   value={activity.avg_cadence ? `${activity.avg_cadence} spm` : "-"}
