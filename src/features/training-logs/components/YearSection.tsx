@@ -2,7 +2,7 @@ import type { YearEntry } from "../models/activity.model";
 import { StatsSummary } from "./StatsBloc";
 import { Accordion } from "@/lib/ui/accordion";
 import MonthAccordion from "./MonthAccordion";
-import type { LoadingState, UpdateActivityParams } from "../controllers/ledger.controller";
+import type { LoadingState, UpdateActivityParams } from "../controllers/activity.controller";
 
 export default function YearSection({
   yearEntry,

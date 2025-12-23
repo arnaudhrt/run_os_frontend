@@ -1,16 +1,15 @@
 import { useRef, useEffect, useMemo, useState, useCallback } from "react";
-import { Flag, Trophy, Medal, ChevronLeft, ChevronRight, Divide } from "lucide-react";
+import { Flag, Trophy, Medal, ChevronLeft, ChevronRight, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/lib/ui/tooltip";
 import type { RaceModel } from "../models/race.model";
 import type { PhaseModel } from "../models/phase.model";
 import type { PhaseType } from "@/lib/types/type";
 import { ButtonGroup } from "@/lib/ui/button-group";
 import { Button } from "@/lib/ui/button";
 import { NativeSelect, NativeSelectOption } from "@/lib/ui/native-select";
-import { Dialog } from "radix-ui";
 import { RaceDetailsDialog } from "./RaceDetailsDialog";
 import { PhaseDetailsDialog } from "./PhaseDetailsDialog";
+import { VolumeChart } from "./VolumeChart";
 
 interface TimelineCanvasProps {
   races: RaceModel[];
@@ -30,6 +29,7 @@ interface WeekData {
 const HEADER_HEIGHT = 64;
 const RACE_TRACK_HEIGHT = 80;
 const PHASE_TRACK_HEIGHT = 80;
+const CHART_TRACK_HEIGHT = 150;
 const TOTAL_WEEKS = 104; // 2 years
 const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
 
@@ -44,9 +44,9 @@ const ZOOM_MODES: ZoomMode[] = ["3m", "6m", "9m"];
 const phaseColors: Record<PhaseType, { bg: string; border: string; text: string }> = {
   base: { bg: "bg-blue-50", border: "border-blue-500", text: "text-blue-900" },
   build: { bg: "bg-amber-50", border: "border-amber-500", text: "text-amber-900" },
-  peak: { bg: "bg-red-50", border: "border-red-500", text: "text-red-900" },
-  taper: { bg: "bg-purple-50", border: "border-purple-500", text: "text-purple-900" },
-  recovery: { bg: "bg-green-50", border: "border-green-500", text: "text-green-900" },
+  peak: { bg: "bg-purple-50", border: "border-purple-500", text: "text-purple-900" },
+  taper: { bg: "bg-emerald-50", border: "border-emerald-500", text: "text-emerald-900" },
+  recovery: { bg: "bg-zinc-50", border: "border-zinc-500", text: "text-zinc-900" },
   off: { bg: "bg-zinc-50", border: "border-zinc-500", text: "text-zinc-900" },
 };
 
@@ -83,13 +83,6 @@ function getMonthName(date: Date): string {
   return date.toLocaleDateString("en-US", { month: "short" });
 }
 
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
-}
-
 function generateYearOptions(currentYear: number): number[] {
   const years: number[] = [];
   for (let y = currentYear - 2; y <= currentYear + 2; y++) {
@@ -103,6 +96,7 @@ export default function TimelineCanvas({ races, phases }: TimelineCanvasProps) {
   const [openPhaseDetails, setOpenPhaseDetails] = useState(false);
   const [selectedRace, setSelectedRace] = useState<RaceModel | null>(null);
   const [selectedPhase, setSelectedPhase] = useState<PhaseModel | null>(null);
+  const [chartSelection, setChartSelection] = useState("volume");
   const scrollRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -194,34 +188,57 @@ export default function TimelineCanvas({ races, phases }: TimelineCanvasProps) {
     setSelectedYear(Number(e.target.value));
   };
 
+  const handleChartSelection = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setChartSelection(e.target.value);
+  };
+
   return (
     <div className="space-y-4">
       {/* Controls */}
       <div className="flex items-center justify-between">
         {/* Zoom Tabs */}
-        <ButtonGroup>
-          {ZOOM_MODES.map((mode) => (
-            <Button key={mode} variant="outline" size="sm" className={`${zoomMode === mode && "bg-muted"}`} onClick={() => setZoomMode(mode)}>
-              {ZOOM_CONFIG[mode].label}
-            </Button>
-          ))}
-        </ButtonGroup>
-
-        {/* Year Selector */}
-        <div className="flex items-center">
-          <Button onClick={handlePrevYear} variant="ghost" size="sm" disabled={selectedYear <= currentYear - 2}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <NativeSelect value={selectedYear} onChange={handleYearChange} size="sm">
-            {yearOptions.map((year) => (
-              <NativeSelectOption key={year} value={year}>
-                {year}
-              </NativeSelectOption>
+        <div className="flex gap-3 items-center">
+          <ButtonGroup>
+            {ZOOM_MODES.map((mode) => (
+              <Button key={mode} variant="outline" size="sm" className={`${zoomMode === mode && "bg-muted"}`} onClick={() => setZoomMode(mode)}>
+                {ZOOM_CONFIG[mode].label}
+              </Button>
             ))}
+          </ButtonGroup>
+
+          <NativeSelect value={chartSelection} onChange={handleChartSelection} size="sm" className="rounded-lg">
+            <NativeSelectOption className="text-sm" value="volume">
+              Volume
+            </NativeSelectOption>
+            <NativeSelectOption value="time">Time</NativeSelectOption>
+            <NativeSelectOption value="elevation">Elevation</NativeSelectOption>
           </NativeSelect>
-          <Button onClick={handleNextYear} variant="ghost" size="sm" disabled={selectedYear >= currentYear + 2}>
-            <ChevronRight className="h-4 w-4" />
+        </div>
+
+        <div className="flex gap-2">
+          <Button variant="outline">
+            <Target className="size-4" />
+            Create Training Phase
           </Button>
+          <Button>
+            <Flag className="size-4" />
+            Create race
+          </Button>
+          <div className="flex items-center -ml-2">
+            <Button onClick={handlePrevYear} variant="ghost" size="sm" disabled={selectedYear <= currentYear - 2}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <NativeSelect value={selectedYear} onChange={handleYearChange} size="sm">
+              {yearOptions.map((year) => (
+                <NativeSelectOption key={year} value={year}>
+                  {year}
+                </NativeSelectOption>
+              ))}
+            </NativeSelect>
+            <Button onClick={handleNextYear} variant="ghost" size="sm" disabled={selectedYear >= currentYear + 2}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -235,8 +252,11 @@ export default function TimelineCanvas({ races, phases }: TimelineCanvasProps) {
           <div style={{ height: PHASE_TRACK_HEIGHT, width: "30px" }} className="border-b flex justify-center items-center">
             <p className="text-xs text-muted-foreground font-medium -rotate-90">Training</p>
           </div>
+          <div style={{ height: CHART_TRACK_HEIGHT, width: "30px" }} className="border-b flex justify-center items-center">
+            <p className="text-xs text-muted-foreground font-medium -rotate-90">Chart</p>
+          </div>
         </div>
-        <div ref={scrollRef} className="overflow-x-auto scrollbar-thin scrollbar-track-slate-50 scrollbar-thumb-slate-300">
+        <div ref={scrollRef} className="overflow-x-auto scrollable">
           <div className="relative" style={{ width: totalWidth, minWidth: "100%" }}>
             {/* Header Track - Ruler */}
             <div className="sticky top-0 z-20 border-b border-zinc-200 bg-white/95 backdrop-blur-sm" style={{ height: HEADER_HEIGHT }}>
@@ -318,7 +338,7 @@ export default function TimelineCanvas({ races, phases }: TimelineCanvasProps) {
             {/* Phase Track */}
             <div className="relative" style={{ height: PHASE_TRACK_HEIGHT }}>
               {/* Week grid lines */}
-              <div className="absolute inset-0 flex">
+              <div className="absolute border-b inset-0 flex">
                 {weeks.map((_, index) => (
                   <div key={index} className="border-l border-zinc-100" style={{ width: weekWidth, minWidth: weekWidth }} />
                 ))}
@@ -388,6 +408,26 @@ export default function TimelineCanvas({ races, phases }: TimelineCanvasProps) {
                   </div>
                 );
               })}
+            </div>
+
+            {/* Chart Track */}
+            <div className="relative border-zinc-200" style={{ height: CHART_TRACK_HEIGHT }}>
+              {/* Week grid lines */}
+              <div className="absolute inset-0 flex">
+                {weeks.map((week, index) => (
+                  <div
+                    key={index}
+                    className={`relative flex flex-col justify-end border-zinc-200/50 border-l px-2 pb-1`}
+                    style={{ width: weekWidth, minWidth: weekWidth }}
+                  >
+                    <span className="text-[10px] text-zinc-400">W{week.weekNum}</span>
+                  </div>
+                ))}
+              </div>
+              {/* Volume Chart */}
+              <div className="absolute inset-0 py-1 px-4">
+                <VolumeChart width={totalWidth - 40} height={CHART_TRACK_HEIGHT} selection={chartSelection} />
+              </div>
             </div>
 
             {/* Today Line */}

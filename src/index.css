@@ -127,3 +127,8 @@
     @apply font-sans;
   }
 }
+
+.scrollable {
+  scrollbar-width: thin;
+  scrollbar-color: #fff;
+}

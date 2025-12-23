@@ -1,19 +1,20 @@
+import LoaderScreen from "@/lib/components/LoaderScreen";
 import { StatsSummary } from "../components/StatsBloc";
 import TableFilters from "../components/TableFilters";
 import YearSection from "../components/YearSection";
-import { useLedgerController } from "../controllers/ledger.controller";
+import { useActivityController } from "../controllers/activity.controller";
 
 export default function Ledger() {
-  const { handleSyncGarmin, loading, structuredActivitiesLog, handleUpdateActivity } = useLedgerController();
+  const { handleSyncGarmin, loading, structuredActivitiesLog, handleUpdateActivity, handleCreateActivity } = useActivityController();
   if (!structuredActivitiesLog) {
-    return <div>Loading...</div>;
+    return <LoaderScreen />;
   }
   console.log(structuredActivitiesLog);
   return (
     <div className="max-w-6xl mx-auto px-8 py-12">
       <header className="flex justify-between items-center pb-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Training Ledger</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Training Logs</h1>
           <p className="text-muted-foreground">Historical activity log and weekly reviews.</p>
         </div>
         <StatsSummary
@@ -25,7 +26,7 @@ export default function Ledger() {
           className="bg-slate-50/50"
         />
       </header>
-      <TableFilters garminSync={handleSyncGarmin} loading={loading} />
+      <TableFilters garminSync={handleSyncGarmin} loading={loading} createActivity={handleCreateActivity} />
       {structuredActivitiesLog.years.map((year) => (
         <YearSection key={year.year} yearEntry={year} handleUpdateActivity={handleUpdateActivity} loading={loading} />
       ))}

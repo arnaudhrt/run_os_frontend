@@ -14,7 +14,7 @@ export function TrainingEffectBadge({ label }: TrainingEffectBadgeProps) {
       className: "bg-green-100 text-green-700 hover:bg-green-100 border-transparent",
     },
     AEROBIC_BASE: {
-      displayLabel: "Base",
+      displayLabel: "Aerobic Base",
       className: "bg-lime-100 text-lime-700 hover:bg-lime-100 border-transparent",
     },
     TEMPO: {
@@ -22,7 +22,7 @@ export function TrainingEffectBadge({ label }: TrainingEffectBadgeProps) {
       className: "bg-yellow-100 text-yellow-700 hover:bg-yellow-100 border-transparent",
     },
     LACTATE_THRESHOLD: {
-      displayLabel: "Threshold",
+      displayLabel: "Lactate Threshold",
       className: "bg-orange-100 text-orange-700 hover:bg-orange-100 border-transparent",
     },
     VO2MAX: {
@@ -42,7 +42,7 @@ export function TrainingEffectBadge({ label }: TrainingEffectBadgeProps) {
   const { displayLabel, className } = styles[label];
 
   return (
-    <Badge variant="outline" className={`text-xs font-medium tracking-wider ${className}`}>
+    <Badge variant="outline" className={`text-xs uppercase font-medium tracking-wider ${className}`}>
       {displayLabel}
     </Badge>
   );

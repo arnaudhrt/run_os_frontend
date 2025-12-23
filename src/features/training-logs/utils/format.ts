@@ -304,3 +304,8 @@ export function structureActivitiesLog(activities: ActivityModel[], minDateStr: 
 
   return { years, totals: globalTotals };
 }
+
+export function calculateAvgSpeed(distanceMeters: number, durationSeconds: number): number {
+  if (durationSeconds === 0) return 0;
+  return distanceMeters / durationSeconds;
+}

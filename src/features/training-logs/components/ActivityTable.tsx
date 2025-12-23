@@ -12,7 +12,7 @@ import { Button } from "@/lib/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/lib/ui/popover";
 import { rpe, workoutTypes } from "@/lib/types/type";
 import { Textarea } from "@/lib/ui/textarea";
-import type { LoadingState, UpdateActivityParams } from "../controllers/ledger.controller";
+import type { LoadingState, UpdateActivityParams } from "../controllers/activity.controller";
 
 export default function ActivityTable({
   week,
@@ -277,6 +277,7 @@ export default function ActivityTable({
           </TableBody>
         </Table>
         <ActivityDetailsDialog activity={selectedActivity} open={openDetails} onOpenChange={setOpenDetails} />
+        {/* <ActivityDialog activity={selectedActivity} open={openDetails} onOpenChange={setOpenDetails} /> */}
       </div>
       <div className="py-2"></div>
     </div>

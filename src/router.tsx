@@ -6,9 +6,9 @@ import RecordsPage from "./features/records/views/RecordsPage";
 import RegisterPage from "./features/auth/views/RegisterPage";
 import LoginPage from "./features/auth/views/LoginPage";
 import ProtectedRoutes from "./lib/components/ProtectedRoutes";
-import HorizonPage from "./features/horizon/views/HorizonPage";
-import LedgerPage from "./features/ledger/views/LedgerPage";
 import ProfilePage from "./features/profile/views/ProfilePage";
+import TimelinePage from "./features/timeline/views/TimelinePage";
+import LogsPage from "./features/training-logs/views/LogsPage";
 
 export const router = createBrowserRouter([
   {
@@ -23,12 +23,12 @@ export const router = createBrowserRouter([
         element: <ProtectedRoutes />,
         children: [
           {
-            path: "horizon",
-            element: <HorizonPage />,
+            path: "timeline",
+            element: <TimelinePage />,
           },
           {
-            path: "ledger",
-            element: <LedgerPage />,
+            path: "logs",
+            element: <LogsPage />,
           },
           {
             path: "week",

@@ -7,7 +7,7 @@ Frontend: Vite + React + TypeScript + Tailwind CSSBackend: Node.js + ExpressData
 Pages & Features
 Your application will have three primary views, mirroring your self-coaching needs: Macro Strategy, Weekly Tactic, Historical Review, Hall Of Fame (Personal Records).
 
-1. 🗓️ Year / Goals Page (Macro Strategy)
+1. 🗓️ Timeline Tab (Macro Strategy)
 
 - Purpose: Define races and structure the preparation cycle.
 - Key Features:
@@ -15,7 +15,7 @@ Your application will have three primary views, mirroring your self-coaching nee
   - The Visual: A horizontal bar representing the whole year. The current week is highlighted with a vertical "Now" line. The Phases and races are represented on that timeline.
   - Phase CRUD: Forms to define the start_date and end_date for phases (Base, Build, Peak, Taper, Recovery), linked to a specific race.
 
-2. ⚡ Dashboard / Weekly Tab (Tactical planning linked to year strategy)
+2. ⚡ Week Tab (Tactical planning linked to year strategy)
 
 - Purpose: Execute the Sunday Ritual: Review last week and plan the next.
 - Key Features:
@@ -25,7 +25,7 @@ Your application will have three primary views, mirroring your self-coaching nee
   - Week view: a sliders to switch from the current week to the next one or the past one. same view comparison table.
   - A button to "Generate Weekly Card" that creates a simple, clean PNG image / TXT file for notes of the 7-day plan, a button sync to get data from garmin/strava.
 
-3. 📝 Log Page (Review & Analysis)
+3. 📝 Training Logs Tab (Review & Analysis)
 
 - Purpose: Fast access to historical data with powerful filtering. This replaces your physical log file.
 - Key Features:
@@ -39,7 +39,7 @@ Your application will have three primary views, mirroring your self-coaching nee
     - Monthly/Yearly Summary (Distance, Time, Elevation).
     - Personal Records (PRs): Automatically highlight the fastest run within defined/filtered distance ranges (e.g., Fastest run between 7.8km and 8.2km).
 
-4. 🎖️ Records (The Hall of Fame)
+4. 🎖️ Records tab (The Hall of Fame)
 
 - Purpose: Showcase static and dynamic Personal Records (PRs), providing clear milestones and performance history outside the daily/weekly grind.
 - Standard distances: 1k, 5k, 10k, HM, M
@@ -47,6 +47,6 @@ Your application will have three primary views, mirroring your self-coaching nee
 - Trail records : Highest Single Run Vertical Gain, Longest ascending segment, longest descending segment
 - Performance Edge: Lowest Avg HR for Long Run (can set the long run distance / specific pace), Highest Average HR for any run
 
-  5.💭AI Chat
+  5.💭AI Chat tab
 
 - Contextual Advice: Allows you to ask questions a filter cannot, such as: "Based on my RPE and HR data, did I hit my goal of keeping Zone 2 pace during the Base phase?" or "What patterns can you find in my running leading up to the runs where I used the #bonked tag?"

@@ -58,6 +58,8 @@ export interface ActivitiesResponse {
 
 export type UpdateActivityModel = Partial<Omit<ActivityModel, "id" | "user_id" | "created_at" | "updated_at">>;
 
+export type CreateActivityModel = Omit<ActivityModel, "id" | "user_id" | "created_at" | "updated_at">;
+
 export interface DayEntry {
   date: string; // ISO date string (YYYY-MM-DD)
   dayOfWeek: number; // 0-6 (Sunday-Saturday)

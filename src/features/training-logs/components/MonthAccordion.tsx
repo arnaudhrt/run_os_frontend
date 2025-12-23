@@ -4,7 +4,7 @@ import type { MonthEntry } from "../models/activity.model";
 import ActivityTable from "./ActivityTable";
 import { Map, Mountain, Timer } from "lucide-react";
 import { format } from "date-fns";
-import type { LoadingState, UpdateActivityParams } from "../controllers/ledger.controller";
+import type { LoadingState, UpdateActivityParams } from "../controllers/activity.controller";
 
 export default function MonthAccordion({
   monthEntry,

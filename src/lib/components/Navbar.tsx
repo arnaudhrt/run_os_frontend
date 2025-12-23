@@ -4,9 +4,9 @@ import TopBarAvatar from "./TopBarAvatar";
 import { useRef, useState, useLayoutEffect } from "react";
 
 const navLinks = [
-  { to: "/app/horizon", label: "Horizon" },
+  { to: "/app/timeline", label: "Timeline" },
   { to: "/app/week", label: "Week" },
-  { to: "/app/ledger", label: "Ledger" },
+  { to: "/app/logs", label: "Logs" },
   { to: "/app/records", label: "Records" },
 ];
 
@@ -71,7 +71,7 @@ export default function Navbar() {
       <ul ref={navRef} className="relative flex items-center gap-1" onMouseLeave={handleMouseLeave}>
         <li
           className={cn(
-            "absolute top-0 h-full rounded-md pointer-events-none transition-all duration-200 ease-out",
+            "absolute top-0 h-full rounded-lg pointer-events-none transition-all duration-200 ease-out",
             isHovering ? "bg-accent/50" : "bg-accent"
           )}
           style={{
@@ -92,7 +92,7 @@ export default function Navbar() {
               to={link.to}
               className={({ isActive }) =>
                 cn(
-                  "block px-4 py-2 text-sm font-medium rounded-md transition-colors relative z-10",
+                  "block px-4 py-1 text-sm font-medium rounded-md transition-colors relative z-10",
                   isActive ? "text-accent-foreground" : "text-muted-foreground hover:text-foreground"
                 )
               }
