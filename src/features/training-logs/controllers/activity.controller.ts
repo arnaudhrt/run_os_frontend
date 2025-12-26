@@ -42,16 +42,24 @@ export interface CreateActivityParams {
 
 export interface UpdateActivityParams {
   id: string;
+  activityType?: ActivityType;
+  workoutType?: WorkoutType;
+  distanceMeters?: number;
+  durationSeconds?: number;
+  elevationGainMeters?: number;
+  elevationLossMeters?: number;
+  avgHeartRate?: number;
+  maxHeartRate?: number;
+  avgCadence?: number;
+  steps?: number;
+  calories?: number;
+  avgTemperatureCelsius?: number;
   rpe?: RPE;
   notes?: string;
-  workoutType?: WorkoutType;
   onClose: () => void;
 }
 
-export interface DeleteActivityParams {
-  id: string;
-  onClose: () => void;
-}
+export type ValidationErrors = Record<string, string> | null;
 
 export const useActivityController = () => {
   const [structuredActivitiesLog, setStructuredActivitiesLog] = useState<StructuredActivitiesLog | null>(null);
@@ -100,24 +108,79 @@ export const useActivityController = () => {
     }
   };
 
-  const handleUpdateActivity = async ({ id, rpe, notes, workoutType, onClose }: UpdateActivityParams): Promise<void> => {
+  const handleUpdateActivity = async ({
+    id,
+    activityType,
+    workoutType,
+    distanceMeters,
+    durationSeconds,
+    elevationGainMeters,
+    elevationLossMeters,
+    avgHeartRate,
+    maxHeartRate,
+    avgCadence,
+    steps,
+    calories,
+    avgTemperatureCelsius,
+    rpe,
+    notes,
+    onClose,
+  }: UpdateActivityParams): Promise<void> => {
     setLoading((prev) => ({ ...prev, update: true }));
     setValidationsErrors(null);
     setApiError(null);
 
-    const { success, errors, data } = validateUpdateActivityFields({ id, rpe, notes, workoutType });
+    const { success, errors, data } = validateUpdateActivityFields({
+      id,
+      activityType,
+      workoutType,
+      distanceMeters,
+      durationSeconds,
+      elevationGainMeters,
+      elevationLossMeters,
+      avgHeartRate,
+      maxHeartRate,
+      avgCadence,
+      steps,
+      calories,
+      avgTemperatureCelsius,
+      rpe,
+      notes,
+    });
 
     if (!success || !data) {
       setValidationsErrors(errors);
       setLoading((prev) => ({ ...prev, update: false }));
+      if (errors) {
+        const errorMessages = Object.entries(errors).map(([field, message]) => `${field}: ${message}`).join(", ");
+        toast.error(`Validation failed: ${errorMessages}`);
+      }
       return;
     }
+
+    let avgSpeed: number | undefined;
+    if (data.distanceMeters && data.durationSeconds) {
+      avgSpeed = calculateAvgSpeed(data.distanceMeters, data.durationSeconds);
+    }
+
     try {
       const token = await getFreshIdToken();
       const body = {
-        ...(data.rpe && { rpe: data.rpe }),
-        ...(data.notes && { notes: data.notes }),
+        ...(data.activityType && { activity_type: data.activityType }),
         ...(data.workoutType && { workout_type: data.workoutType }),
+        ...(data.distanceMeters && { distance_meters: data.distanceMeters }),
+        ...(data.durationSeconds && { duration_seconds: data.durationSeconds }),
+        ...(avgSpeed && { avg_speed_mps: avgSpeed }),
+        ...(data.elevationGainMeters && { elevation_gain_meters: data.elevationGainMeters }),
+        ...(data.elevationLossMeters && { elevation_loss_meters: data.elevationLossMeters }),
+        ...(data.avgHeartRate && { avg_heart_rate: data.avgHeartRate }),
+        ...(data.maxHeartRate && { max_heart_rate: data.maxHeartRate }),
+        ...(data.avgCadence && { avg_cadence: data.avgCadence }),
+        ...(data.steps && { steps: data.steps }),
+        ...(data.calories && { calories: data.calories }),
+        ...(data.avgTemperatureCelsius !== undefined && { avg_temperature_celsius: data.avgTemperatureCelsius }),
+        ...(data.rpe && { rpe: data.rpe }),
+        ...(data.notes !== undefined && { notes: data.notes }),
       };
       await updateActivity({ id: data.id, body, token });
       toast.success("Activity updated successfully");
@@ -216,16 +279,16 @@ export const useActivityController = () => {
     }
   };
 
-  const handleDeleteActivity = async ({ id, onClose }: DeleteActivityParams): Promise<void> => {
+  const handleDeleteActivity = async (id: string, onClose: () => void): Promise<void> => {
     setLoading((prev) => ({ ...prev, delete: true }));
     setApiError(null);
 
     try {
       const token = await getFreshIdToken();
       await deleteActivity({ id, token });
+      onClose();
       toast.success("Activity deleted successfully");
       setActivities((prev) => prev.filter((activity) => activity.id !== id));
-      onClose();
     } catch (err) {
       const errorMessage = handleError(err);
       setApiError(errorMessage);

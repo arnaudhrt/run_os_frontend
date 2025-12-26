@@ -55,6 +55,13 @@ export function formatWorkoutType(type: string): string {
     .join(" ");
 }
 
+export function formatActivityType(type: string): string {
+  return type
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
 export function speedToPace(speedMs: number): number | null {
   if (speedMs <= 0) return null;
 

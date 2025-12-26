@@ -5,7 +5,8 @@ import YearSection from "../components/YearSection";
 import { useActivityController } from "../controllers/activity.controller";
 
 export default function Ledger() {
-  const { handleSyncGarmin, loading, structuredActivitiesLog, handleUpdateActivity, handleCreateActivity } = useActivityController();
+  const { handleSyncGarmin, loading, structuredActivitiesLog, handleUpdateActivity, handleCreateActivity, handleDeleteActivity, validationsErrors } =
+    useActivityController();
   if (!structuredActivitiesLog) {
     return <LoaderScreen />;
   }
@@ -28,7 +29,14 @@ export default function Ledger() {
       </header>
       <TableFilters garminSync={handleSyncGarmin} loading={loading} createActivity={handleCreateActivity} />
       {structuredActivitiesLog.years.map((year) => (
-        <YearSection key={year.year} yearEntry={year} handleUpdateActivity={handleUpdateActivity} loading={loading} />
+        <YearSection
+          key={year.year}
+          yearEntry={year}
+          handleUpdateActivity={handleUpdateActivity}
+          loading={loading}
+          handleDeleteActivity={handleDeleteActivity}
+          validationErrors={validationsErrors}
+        />
       ))}
     </div>
   );

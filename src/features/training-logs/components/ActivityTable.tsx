@@ -5,30 +5,37 @@ import { format } from "date-fns";
 import { ActivityBadge } from "./ActivityBadge";
 import { FileText, Mountain, Timer, Map, Plus, Loader2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/lib/ui/tooltip";
-import { ActivityDetailsDialog } from "./ActivityDetailsDialog";
+import { RunningActivityDetailsDialog } from "./RunningActivityDetailsDialog";
 import { useState } from "react";
 import { TrainingEffectBadge } from "./TrainingEffectBadge";
 import { Button } from "@/lib/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/lib/ui/popover";
 import { rpe, workoutTypes } from "@/lib/types/type";
 import { Textarea } from "@/lib/ui/textarea";
-import type { LoadingState, UpdateActivityParams } from "../controllers/activity.controller";
+import type { LoadingState, UpdateActivityParams, ValidationErrors } from "../controllers/activity.controller";
+import { OtherActivityDetailsDialog } from "./OtherActivityDialog";
 
 export default function ActivityTable({
   week,
   days,
   handleUpdateActivity,
+  handleDeleteActivity,
   loading,
+  validationErrors,
 }: {
   week: WeekEntry | null;
   days: DayEntry[];
-  handleUpdateActivity: (params: UpdateActivityParams) => void;
+  handleUpdateActivity: (params: UpdateActivityParams) => Promise<void>;
+  handleDeleteActivity: (activityId: string, onClose: () => void) => Promise<void>;
   loading: LoadingState;
+  validationErrors: ValidationErrors;
 }) {
   const [selectedActivity, setSelectedActivity] = useState<ActivityModel | null>(null);
-  const [openDetails, setOpenDetails] = useState(false);
+  const [openRunningActivityDetails, setOpenRunningActivityDetails] = useState(false);
+  const [openOtherActivityDetails, setOpenOtherActivityDetails] = useState(false);
   const [notes, setNotes] = useState<string>("");
   const [activePopover, setActivePopover] = useState<string | null>(null);
+  const runningActivities = ["run", "trail", "treadmill", "hike"];
 
   if (!week || !days) return null;
   return (
@@ -51,67 +58,14 @@ export default function ActivityTable({
       </div>
       <div className="rounded-lg border bg-card">
         <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/50 uppercase text-[10px] font-bold tracking-widest">
-              <TableHead className="font-bold text-[10px] tracking-widest uppercase">Date</TableHead>
-              <TableHead className="font-bold text-[10px] tracking-widest uppercase">Activity</TableHead>
-              <TableHead className="font-bold text-[10px] tracking-widest uppercase">Type</TableHead>
-              <TableHead className="font-bold text-[10px] tracking-widest uppercase">Training Effect</TableHead>
-              <TableHead className="text-right font-bold text-[10px] tracking-widest uppercase">Distance</TableHead>
-              <TableHead className="text-right font-bold text-[10px] tracking-widest uppercase">Time</TableHead>
-              <TableHead className="text-right font-bold text-[10px] tracking-widest uppercase">
-                <Tooltip>
-                  <TooltipTrigger>
-                    <span className="font-bold text-[10px] tracking-widest uppercase">Pace</span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>min/km</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TableHead>
-              <TableHead className="text-right font-bold text-[10px] tracking-widest uppercase">Avg/Max HR</TableHead>
-              <TableHead className="text-right font-bold text-[10px] tracking-widest uppercase">Elev</TableHead>
-              <TableHead className="text-right font-bold text-[10px] tracking-widest uppercase">RPE</TableHead>
-              <TableHead className="text-center font-bold text-[10px] tracking-widest uppercase">Notes</TableHead>
-            </TableRow>
-          </TableHeader>
+          <TableHeaderBloc />
           <TableBody>
             {days.map((day, index) => {
               if (day.isRestDay) {
-                return (
-                  <TableRow key={index} className="font-mono text-sm bg-gray-50 hover:bg-gray-50">
-                    <TableCell className="font-medium font-sans whitespace-nowrap">{format(new Date(day.date), "EEE do")}</TableCell>
-                    <TableCell>
-                      <ActivityBadge type="rest_day" />
-                    </TableCell>
-                    <TableCell></TableCell>
-                    <TableCell></TableCell>
-                    <TableCell></TableCell>
-                    <TableCell></TableCell>
-                    <TableCell></TableCell>
-                    <TableCell></TableCell>
-                    <TableCell></TableCell>
-                    <TableCell></TableCell>
-                    <TableCell></TableCell>
-                  </TableRow>
-                );
+                return <RestDay index={index} date={day.date} />;
               }
               if (day.isOutsideMonth) {
-                return (
-                  <TableRow key={index} className="font-mono text-sm bg-gray-100 hover:bg-muted">
-                    <TableCell className="font-medium font-sans whitespace-nowrap">{format(new Date(day.date), "EEE do")}</TableCell>
-                    <TableCell></TableCell>
-                    <TableCell></TableCell>
-                    <TableCell></TableCell>
-                    <TableCell></TableCell>
-                    <TableCell></TableCell>
-                    <TableCell></TableCell>
-                    <TableCell></TableCell>
-                    <TableCell></TableCell>
-                    <TableCell></TableCell>
-                    <TableCell></TableCell>
-                  </TableRow>
-                );
+                return <DayOutsideMonth index={index} date={day.date} />;
               }
               if (day.activities && day.activities?.length > 0) {
                 return day.activities.map((activity, activityIndex) => (
@@ -122,7 +76,11 @@ export default function ActivityTable({
                     }`}
                     onClick={() => {
                       setSelectedActivity(activity);
-                      setOpenDetails(true);
+                      if (runningActivities.includes(activity.activity_type)) {
+                        setOpenRunningActivityDetails(true);
+                      } else {
+                        setOpenOtherActivityDetails(true);
+                      }
                     }}
                   >
                     <TableCell className="font-medium font-sans whitespace-nowrap align-top">
@@ -134,7 +92,7 @@ export default function ActivityTable({
                     </TableCell>
 
                     <TableCell>
-                      {activity.workout_type === "uncategorized" ? (
+                      {!activity.workout_type || activity.workout_type === "uncategorized" ? (
                         <Popover
                           open={activePopover === `type-${activity.id}`}
                           onOpenChange={(open) => setActivePopover(open ? `type-${activity.id}` : null)}
@@ -153,7 +111,8 @@ export default function ActivityTable({
                               <div
                                 key={i}
                                 className="rounded-md py-1 pr-8 pl-1.5 text-sm hover:bg-accent"
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   handleUpdateActivity({
                                     workoutType: el,
                                     id: activity.id,
@@ -205,7 +164,8 @@ export default function ActivityTable({
                               <div
                                 key={i}
                                 className="rounded-md py-1 pr-8 pl-1.5 text-sm hover:bg-accent"
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   handleUpdateActivity({
                                     rpe: el,
                                     id: activity.id,
@@ -254,7 +214,8 @@ export default function ActivityTable({
                             <Button
                               variant="outline"
                               size="xs"
-                              onClick={() => {
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 handleUpdateActivity({
                                   notes: notes,
                                   id: activity.id,
@@ -276,10 +237,91 @@ export default function ActivityTable({
             })}
           </TableBody>
         </Table>
-        <ActivityDetailsDialog activity={selectedActivity} open={openDetails} onOpenChange={setOpenDetails} />
-        {/* <ActivityDialog activity={selectedActivity} open={openDetails} onOpenChange={setOpenDetails} /> */}
+        <RunningActivityDetailsDialog
+          activity={selectedActivity}
+          open={openRunningActivityDetails}
+          onOpenChange={setOpenRunningActivityDetails}
+          deleteActivity={handleDeleteActivity}
+          updateActivity={handleUpdateActivity}
+          loading={loading}
+          validationErrors={validationErrors}
+        />
+        <OtherActivityDetailsDialog
+          activity={selectedActivity}
+          open={openOtherActivityDetails}
+          onOpenChange={setOpenOtherActivityDetails}
+          deleteActivity={handleDeleteActivity}
+          loading={loading}
+        />
       </div>
       <div className="py-2"></div>
     </div>
+  );
+}
+
+function TableHeaderBloc() {
+  return (
+    <TableHeader>
+      <TableRow className="bg-muted/50 uppercase text-[10px] font-bold tracking-widest">
+        <TableHead className="font-bold text-[10px] tracking-widest uppercase">Date</TableHead>
+        <TableHead className="font-bold text-[10px] tracking-widest uppercase">Activity</TableHead>
+        <TableHead className="font-bold text-[10px] tracking-widest uppercase">Type (intent)</TableHead>
+        <TableHead className="font-bold text-[10px] tracking-widest uppercase">Training Effect (result)</TableHead>
+        <TableHead className="text-right font-bold text-[10px] tracking-widest uppercase">Distance</TableHead>
+        <TableHead className="text-right font-bold text-[10px] tracking-widest uppercase">Time</TableHead>
+        <TableHead className="text-right font-bold text-[10px] tracking-widest uppercase">
+          <Tooltip>
+            <TooltipTrigger>
+              <span className="font-bold text-[10px] tracking-widest uppercase">Pace</span>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>min/km</p>
+            </TooltipContent>
+          </Tooltip>
+        </TableHead>
+        <TableHead className="text-right font-bold text-[10px] tracking-widest uppercase">Avg/Max HR</TableHead>
+        <TableHead className="text-right font-bold text-[10px] tracking-widest uppercase">Elev</TableHead>
+        <TableHead className="text-right font-bold text-[10px] tracking-widest uppercase">RPE</TableHead>
+        <TableHead className="text-center font-bold text-[10px] tracking-widest uppercase">Notes</TableHead>
+      </TableRow>
+    </TableHeader>
+  );
+}
+
+function RestDay({ index, date }: { index: number; date: string }) {
+  return (
+    <TableRow key={index} className="font-mono text-sm bg-gray-50 hover:bg-gray-50">
+      <TableCell className="font-medium font-sans whitespace-nowrap">{format(new Date(date), "EEE do")}</TableCell>
+      <TableCell>
+        <ActivityBadge type="rest_day" />
+      </TableCell>
+      <TableCell></TableCell>
+      <TableCell></TableCell>
+      <TableCell></TableCell>
+      <TableCell></TableCell>
+      <TableCell></TableCell>
+      <TableCell></TableCell>
+      <TableCell></TableCell>
+      <TableCell></TableCell>
+      <TableCell></TableCell>
+    </TableRow>
+  );
+}
+
+function DayOutsideMonth({ index, date }: { index: number; date: string }) {
+  return (
+    <TableRow key={index} className="font-mono text-sm bg-gray-100 hover:bg-muted">
+      <TableCell className="font-medium font-sans whitespace-nowrap">{format(new Date(date), "EEE do")}</TableCell>
+      <TableCell></TableCell>
+      <TableCell></TableCell>
+      <TableCell></TableCell>
+      <TableCell></TableCell>
+      <TableCell></TableCell>
+      <TableCell></TableCell>
+      <TableCell></TableCell>
+      <TableCell></TableCell>
+      <TableCell></TableCell>
+      <TableCell></TableCell>
+    </TableRow>
   );
 }

@@ -10,19 +10,15 @@ export function ActivityBadge({ type }: ActivityBadgeProps) {
   const styles: Record<ActivityType, { label: string; className: string }> = {
     run: {
       label: "run",
-      className: "bg-orange-100 text-orange-700 hover:bg-orange-100 border-transparent",
+      className: "bg-blue-100 text-blue-700 hover:bg-blue-100 border-transparent",
     },
     trail: {
       label: "trail",
-      className: "bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-transparent",
+      className: "bg-orange-100 text-orange-700 hover:bg-orange-100 border-transparent",
     },
     treadmill: {
       label: "treadmill",
       className: "bg-slate-100 text-slate-600 hover:bg-slate-100 border-transparent",
-    },
-    walk: {
-      label: "walk",
-      className: "bg-stone-100 text-stone-600 hover:bg-stone-100 border-transparent",
     },
     hike: {
       label: "hike",
@@ -30,7 +26,7 @@ export function ActivityBadge({ type }: ActivityBadgeProps) {
     },
     bike: {
       label: "bike",
-      className: "bg-blue-100 text-blue-700 hover:bg-blue-100 border-transparent",
+      className: "bg-yellow-100 text-yellow-700 hover:bg-yellow-100 border-transparent",
     },
     swim: {
       label: "swim",
@@ -38,7 +34,7 @@ export function ActivityBadge({ type }: ActivityBadgeProps) {
     },
     strength: {
       label: "strength",
-      className: "bg-indigo-100 text-indigo-700 hover:bg-indigo-100 border-transparent",
+      className: "bg-purple-100 text-purple-700 hover:bg-purple-100 border-transparent",
     },
     cross_training: {
       label: "xt",

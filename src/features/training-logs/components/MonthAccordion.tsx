@@ -4,16 +4,20 @@ import type { MonthEntry } from "../models/activity.model";
 import ActivityTable from "./ActivityTable";
 import { Map, Mountain, Timer } from "lucide-react";
 import { format } from "date-fns";
-import type { LoadingState, UpdateActivityParams } from "../controllers/activity.controller";
+import type { LoadingState, UpdateActivityParams, ValidationErrors } from "../controllers/activity.controller";
 
 export default function MonthAccordion({
   monthEntry,
-  handleUpdateActivity,
   loading,
+  handleUpdateActivity,
+  handleDeleteActivity,
+  validationErrors,
 }: {
   monthEntry: MonthEntry;
-  handleUpdateActivity: (params: UpdateActivityParams) => void;
   loading: LoadingState;
+  handleUpdateActivity: (params: UpdateActivityParams) => Promise<void>;
+  handleDeleteActivity: (activityId: string, onClose: () => void) => Promise<void>;
+  validationErrors: ValidationErrors;
 }) {
   if (!monthEntry.weeks) return null;
 
@@ -55,7 +59,14 @@ export default function MonthAccordion({
                   </span>
                   <div className="h-px flex-1 bg-border" />
                 </div>
-                <ActivityTable week={week} days={completedDays} handleUpdateActivity={handleUpdateActivity} loading={loading} />
+                <ActivityTable
+                  week={week}
+                  days={completedDays}
+                  handleUpdateActivity={handleUpdateActivity}
+                  loading={loading}
+                  handleDeleteActivity={handleDeleteActivity}
+                  validationErrors={validationErrors}
+                />
               </div>
             );
           })}
