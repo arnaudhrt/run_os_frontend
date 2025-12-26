@@ -15,8 +15,8 @@ import {
   workoutTypes,
   trainingEffectLabels,
 } from "@/lib/types/type";
-import type { CreateActivityParams } from "../controllers/activity.controller";
-import { formatWorkoutType } from "../utils/format";
+import type { CreateActivityParams } from "../../controllers/activity.controller";
+import { formatWorkoutType } from "../../utils/format";
 import { Popover, PopoverContent, PopoverTrigger } from "@/lib/ui/popover";
 
 interface CreateActivityDialogProps {

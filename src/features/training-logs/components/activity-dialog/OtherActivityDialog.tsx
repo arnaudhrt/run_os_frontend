@@ -19,13 +19,13 @@ import {
   Edit,
   Trash,
 } from "lucide-react";
-import { formatDuration, formatWorkoutType, formatHeartRate, formatDistance } from "../utils/format";
-import type { ActivityModel } from "../models/activity.model";
-import { ActivityBadge } from "./ActivityBadge";
+import { formatDuration, formatWorkoutType, formatHeartRate, formatDistance } from "../../utils/format";
+import type { ActivityModel } from "../../models/activity.model";
+import { ActivityBadge } from "../data-table/ActivityBadge";
 import { format } from "date-fns";
 import { Button } from "@/lib/ui/button";
-import type { LoadingState } from "../controllers/activity.controller";
-import DeleteDialog from "./DeleteDialog";
+import type { LoadingState } from "../../controllers/activity.controller";
+import DeleteDialog from "./DeleteActivityDialog";
 
 interface OtherActivityDetailsDialogProps {
   activity: ActivityModel | null;

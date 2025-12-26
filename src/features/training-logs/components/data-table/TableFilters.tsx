@@ -2,8 +2,8 @@ import { useState } from "react";
 import { Button } from "@/lib/ui/button";
 import { ButtonGroup } from "@/lib/ui/button-group";
 import { ArrowDown, ArrowUp, Loader2, Plus } from "lucide-react";
-import type { CreateActivityParams, LoadingState } from "../controllers/activity.controller";
-import { CreateActivityDialog } from "./CreateActivityDialog";
+import type { CreateActivityParams, LoadingState } from "../../controllers/activity.controller";
+import { CreateActivityDialog } from "../activity-dialog/CreateActivityDialog";
 
 export default function TableFilters({
   garminSync,

@@ -1,14 +1,14 @@
 import { Input } from "@/lib/ui/input";
 import { Separator } from "@/lib/ui/separator";
 import React, { useState } from "react";
-import type { ActivityModel } from "../models/activity.model";
+import type { ActivityModel } from "../../models/activity.model";
 import { TrendingUp, Zap, Thermometer, FileText, Activity, ArrowDown, Flame, Footprints, HeartPulse, HeartPlus, Loader2 } from "lucide-react";
 import { Textarea } from "@/lib/ui/textarea";
 import { NativeSelect, NativeSelectOption } from "@/lib/ui/native-select";
 import { rpe as rpeOptions, activityTypes, workoutTypes, type ActivityType, type WorkoutType, type RPE } from "@/lib/types/type";
-import { formatRpe, formatActivityType, formatWorkoutType } from "../utils/format";
+import { formatRpe, formatActivityType, formatWorkoutType } from "../../utils/format";
 import { Button } from "@/lib/ui/button";
-import type { UpdateActivityParams, ValidationErrors } from "../controllers/activity.controller";
+import type { UpdateActivityParams, ValidationErrors } from "../../controllers/activity.controller";
 
 interface EditActivityFormProps {
   activity: ActivityModel;

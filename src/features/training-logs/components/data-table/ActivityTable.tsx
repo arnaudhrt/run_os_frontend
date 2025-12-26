@@ -2,7 +2,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { formatDistance, formatDuration, formatElevation, formatWorkoutType, formatAvgMaxHR, speedToPaceFormatted, formatRpe } from "../utils/format";
 import type { ActivityModel, DayEntry, WeekEntry } from "../models/activity.model";
 import { format } from "date-fns";
-import { ActivityBadge } from "./ActivityBadge";
+import { ActivityBadge } from "./data-table/ActivityBadge";
 import { FileText, Mountain, Timer, Map, Plus, Loader2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/lib/ui/tooltip";
 import { RunningActivityDetailsDialog } from "./RunningActivityDetailsDialog";

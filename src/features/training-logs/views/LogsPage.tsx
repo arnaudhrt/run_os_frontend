@@ -1,6 +1,6 @@
 import LoaderScreen from "@/lib/components/LoaderScreen";
 import { StatsSummary } from "../components/StatsBloc";
-import TableFilters from "../components/TableFilters";
+import TableFilters from "../components/data-table/TableFilters";
 import YearSection from "../components/YearSection";
 import { useActivityController } from "../controllers/activity.controller";
 

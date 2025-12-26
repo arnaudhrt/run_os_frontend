@@ -82,6 +82,7 @@ export const useActivityController = () => {
       const token = await getFreshIdToken();
       await syncGarmin({ token });
       toast.success("Garmin synced successfully");
+      await handleFetchAllActivities();
     } catch (err) {
       const errorMessage = handleError(err);
       setApiError(errorMessage);
@@ -152,7 +153,9 @@ export const useActivityController = () => {
       setValidationsErrors(errors);
       setLoading((prev) => ({ ...prev, update: false }));
       if (errors) {
-        const errorMessages = Object.entries(errors).map(([field, message]) => `${field}: ${message}`).join(", ");
+        const errorMessages = Object.entries(errors)
+          .map(([field, message]) => `${field}: ${message}`)
+          .join(", ");
         toast.error(`Validation failed: ${errorMessages}`);
       }
       return;
@@ -216,6 +219,7 @@ export const useActivityController = () => {
   }: CreateActivityParams): Promise<void> => {
     setLoading((prev) => ({ ...prev, create: true }));
     setApiError(null);
+    setValidationsErrors(null);
 
     const { success, errors, data } = validateCreateActivityFields({
       activityType,
@@ -282,6 +286,11 @@ export const useActivityController = () => {
   const handleDeleteActivity = async (id: string, onClose: () => void): Promise<void> => {
     setLoading((prev) => ({ ...prev, delete: true }));
     setApiError(null);
+
+    if (!id || id.trim() === "") {
+      toast.error("Please select an activity to delete");
+      return;
+    }
 
     try {
       const token = await getFreshIdToken();

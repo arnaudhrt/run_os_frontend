@@ -1,6 +1,7 @@
 import { activityTypes, workoutTypes, type ActivityType, type RPE, type WorkoutType } from "@/lib/types/type";
 import z from "zod";
 
+// UPDATE ACTIVITY VALIDATION
 const updateActivitySchema = z.object({
   id: z.string().min(1, "Activity id is required"),
   activityType: z.enum(activityTypes, { message: "Activity type is required" }).optional(),
@@ -85,7 +86,7 @@ export const validateUpdateActivityFields = ({
   return { success: true, errors: null, data: result.data };
 };
 
-// Create Activity Validation
+// CREATE ACTIVITY VALIDATION
 const createActivitySchema = z.object({
   activityType: z.enum(activityTypes, {
     message: "Activity type is required",
