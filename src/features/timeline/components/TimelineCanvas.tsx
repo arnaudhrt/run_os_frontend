@@ -10,10 +10,13 @@ import { NativeSelect, NativeSelectOption } from "@/lib/ui/native-select";
 import { RaceDetailsDialog } from "./RaceDetailsDialog";
 import { PhaseDetailsDialog } from "./PhaseDetailsDialog";
 import { VolumeChart } from "./VolumeChart";
+import { CreateRaceDialog, type CreateRaceParams } from "./CreateRaceDialog";
 
 interface TimelineCanvasProps {
   races: RaceModel[];
   phases: PhaseModel[];
+  onCreateRace?: (data: CreateRaceParams) => void;
+  createRaceLoading?: boolean;
 }
 
 type ZoomMode = "3m" | "6m" | "9m";
@@ -91,9 +94,10 @@ function generateYearOptions(currentYear: number): number[] {
   return years;
 }
 
-export default function TimelineCanvas({ races, phases }: TimelineCanvasProps) {
+export default function TimelineCanvas({ races, phases, onCreateRace, createRaceLoading }: TimelineCanvasProps) {
   const [openRaceDetails, setOpenRaceDetails] = useState(false);
   const [openPhaseDetails, setOpenPhaseDetails] = useState(false);
+  const [openCreateRace, setOpenCreateRace] = useState(false);
   const [selectedRace, setSelectedRace] = useState<RaceModel | null>(null);
   const [selectedPhase, setSelectedPhase] = useState<PhaseModel | null>(null);
   const [chartSelection, setChartSelection] = useState("volume");
@@ -218,11 +222,11 @@ export default function TimelineCanvas({ races, phases }: TimelineCanvasProps) {
         <div className="flex gap-2">
           <Button variant="outline">
             <Target className="size-4" />
-            Create Training Phase
+            Create Training Cycle
           </Button>
-          <Button>
+          <Button onClick={() => setOpenCreateRace(true)}>
             <Flag className="size-4" />
-            Create race
+            Create Race
           </Button>
           <div className="flex items-center -ml-2">
             <Button onClick={handlePrevYear} variant="ghost" size="sm" disabled={selectedYear <= currentYear - 2}>
@@ -439,6 +443,14 @@ export default function TimelineCanvas({ races, phases }: TimelineCanvasProps) {
       </div>
       <RaceDetailsDialog open={openRaceDetails} onOpenChange={setOpenRaceDetails} race={selectedRace} />
       <PhaseDetailsDialog open={openPhaseDetails} onOpenChange={setOpenPhaseDetails} phase={selectedPhase} />
+      {onCreateRace && (
+        <CreateRaceDialog
+          open={openCreateRace}
+          onOpenChange={setOpenCreateRace}
+          onSubmit={onCreateRace}
+          loading={createRaceLoading}
+        />
+      )}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { AccordionContent, AccordionItem, AccordionTrigger } from "@/lib/ui/accordion";
 import { completeWeekDays, formatDistance, formatDuration, formatElevation } from "../utils/format";
 import type { MonthEntry } from "../models/activity.model";
-import ActivityTable from "./ActivityTable";
+import ActivityTable from "./data-table/ActivityTable";
 import { Map, Mountain, Timer } from "lucide-react";
 import { format } from "date-fns";
 import type { LoadingState, UpdateActivityParams, ValidationErrors } from "../controllers/activity.controller";

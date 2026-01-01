@@ -1,19 +1,27 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/lib/ui/table";
-import { formatDistance, formatDuration, formatElevation, formatWorkoutType, formatAvgMaxHR, speedToPaceFormatted, formatRpe } from "../utils/format";
-import type { ActivityModel, DayEntry, WeekEntry } from "../models/activity.model";
+import {
+  formatDistance,
+  formatDuration,
+  formatElevation,
+  formatWorkoutType,
+  formatAvgMaxHR,
+  speedToPaceFormatted,
+  formatRpe,
+} from "../../utils/format";
+import type { ActivityModel, DayEntry, WeekEntry } from "../../models/activity.model";
 import { format } from "date-fns";
-import { ActivityBadge } from "./data-table/ActivityBadge";
+import { ActivityBadge } from "./../data-table/ActivityBadge";
 import { FileText, Mountain, Timer, Map, Plus, Loader2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/lib/ui/tooltip";
-import { RunningActivityDetailsDialog } from "./RunningActivityDetailsDialog";
+import { RunningActivityDetailsDialog } from "./../activity-dialog/RunningActivityDetailsDialog";
 import { useState } from "react";
 import { TrainingEffectBadge } from "./TrainingEffectBadge";
 import { Button } from "@/lib/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/lib/ui/popover";
 import { rpe, workoutTypes } from "@/lib/types/type";
 import { Textarea } from "@/lib/ui/textarea";
-import type { LoadingState, UpdateActivityParams, ValidationErrors } from "../controllers/activity.controller";
-import { OtherActivityDetailsDialog } from "./OtherActivityDialog";
+import type { LoadingState, UpdateActivityParams, ValidationErrors } from "../../controllers/activity.controller";
+import { OtherActivityDetailsDialog } from "../activity-dialog/OtherActivityDialog";
 
 export default function ActivityTable({
   week,

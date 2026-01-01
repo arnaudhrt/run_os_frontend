@@ -1,7 +1,8 @@
 import TimelineCanvas from "../components/TimelineCanvas";
 import TimelineHeader from "../components/TimelineHeader";
-import type { RaceModel } from "../models/race.model";
 import type { PhaseModel } from "../models/phase.model";
+import { useRaceController } from "../controllers/race.controller";
+import type { RaceModel } from "../models/race.model";
 
 const mockRaces: RaceModel[] = [
   {
@@ -119,11 +120,18 @@ const mockPhases: PhaseModel[] = [
 ];
 
 export default function HorizonPage() {
+  const { races, handleCreateRace, loading } = useRaceController();
+
   return (
     <section className="p-8">
       <TimelineHeader />
       <div className="mt-12">
-        <TimelineCanvas races={mockRaces} phases={mockPhases} />
+        <TimelineCanvas
+          races={races ?? mockRaces}
+          phases={mockPhases}
+          onCreateRace={handleCreateRace}
+          createRaceLoading={loading.create}
+        />
       </div>
     </section>
   );
