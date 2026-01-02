@@ -8,15 +8,20 @@ import { ButtonGroup } from "@/lib/ui/button-group";
 import { Button } from "@/lib/ui/button";
 import { NativeSelect, NativeSelectOption } from "@/lib/ui/native-select";
 import { RaceDetailsDialog } from "./RaceDetailsDialog";
-import { PhaseDetailsDialog } from "./PhaseDetailsDialog";
 import { VolumeChart } from "./VolumeChart";
-import { CreateRaceDialog, type CreateRaceParams } from "./CreateRaceDialog";
+import { CreateRaceDialog } from "./CreateRaceDialog";
+import { CreateTrainingCycleDialog } from "./CreateTrainingCycleDialog";
+import type { CreateRaceParams, RaceLoadingState } from "../controllers/race.controller";
+import type { CreateTrainingCycleParams, TrainingCycleLoadingState } from "../controllers/training-cycle.controller";
 
 interface TimelineCanvasProps {
   races: RaceModel[];
   phases: PhaseModel[];
-  onCreateRace?: (data: CreateRaceParams) => void;
-  createRaceLoading?: boolean;
+  raceLoading: RaceLoadingState;
+  trainingCycleLoading: TrainingCycleLoadingState;
+  onCreateRace: (data: CreateRaceParams) => void;
+  onCreateTrainingCycle: (data: CreateTrainingCycleParams) => void;
+  today: Date;
 }
 
 type ZoomMode = "3m" | "6m" | "9m";
@@ -31,7 +36,7 @@ interface WeekData {
 
 const HEADER_HEIGHT = 64;
 const RACE_TRACK_HEIGHT = 80;
-const PHASE_TRACK_HEIGHT = 80;
+const PHASE_TRACK_HEIGHT = 60;
 const CHART_TRACK_HEIGHT = 150;
 const TOTAL_WEEKS = 104; // 2 years
 const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
@@ -94,18 +99,24 @@ function generateYearOptions(currentYear: number): number[] {
   return years;
 }
 
-export default function TimelineCanvas({ races, phases, onCreateRace, createRaceLoading }: TimelineCanvasProps) {
+export default function TimelineCanvas({
+  races,
+  phases,
+  today,
+  currentYear,
+  onCreateRace,
+  raceLoading,
+  trainingCycleLoading,
+  onCreateTrainingCycle,
+}: TimelineCanvasProps & { currentYear: number }) {
   const [openRaceDetails, setOpenRaceDetails] = useState(false);
-  const [openPhaseDetails, setOpenPhaseDetails] = useState(false);
   const [openCreateRace, setOpenCreateRace] = useState(false);
+  const [openCreateTrainingCycle, setOpenCreateTrainingCycle] = useState(false);
   const [selectedRace, setSelectedRace] = useState<RaceModel | null>(null);
-  const [selectedPhase, setSelectedPhase] = useState<PhaseModel | null>(null);
   const [chartSelection, setChartSelection] = useState("volume");
   const scrollRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const today = useMemo(() => new Date(), []);
-  const currentYear = today.getFullYear();
   const yearOptions = useMemo(() => generateYearOptions(currentYear), [currentYear]);
 
   const [zoomMode, setZoomMode] = useState<ZoomMode>("6m");
@@ -220,7 +231,7 @@ export default function TimelineCanvas({ races, phases, onCreateRace, createRace
         </div>
 
         <div className="flex gap-2">
-          <Button variant="outline">
+          <Button variant="outline" onClick={() => setOpenCreateTrainingCycle(true)}>
             <Target className="size-4" />
             Create Training Cycle
           </Button>
@@ -371,43 +382,10 @@ export default function TimelineCanvas({ races, phases, onCreateRace, createRace
                       left: Math.max(0, position),
                       width: Math.max(40, width),
                     }}
-                    title={`${phase.phase_type} - ${phase.weekly_volume_target_km}km, ${phase.weekly_elevation_target_m}m elevation`}
-                    onClick={() => {
-                      setSelectedPhase(phase);
-                      setOpenPhaseDetails(true);
-                    }}
+                    title={`${phase.phase_type}`}
                   >
-                    <div className={cn("h-full gap-0.5 py-2 px-3")}>
+                    <div className={cn("h-full gap-0.5 py-2 px-3 flex items-center")}>
                       <span className={cn("font-semibold capitalize truncate text-sm", colors.text)}>{phase.phase_type}</span>
-
-                      {width > 170 && (
-                        <div className={cn("text-xs space-y-0.5", colors.text, "opacity-80", "flex gap-5")}>
-                          {phase.weekly_elevation_target_m && phase.weekly_elevation_target_m > 0 && (
-                            <div className="flex items-center gap-1">
-                              <span>Volume: {phase.weekly_volume_target_km} km/wk</span>
-                            </div>
-                          )}
-                          {phase.weekly_elevation_target_m && phase.weekly_elevation_target_m > 0 && (
-                            <div className="flex items-center gap-1">
-                              <span>Elevation: {phase.weekly_elevation_target_m} m/wk</span>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                      {width > 120 && width < 170 && (
-                        <div className={cn("text-xs space-y-0.5", colors.text, "opacity-80", "flex gap-5")}>
-                          <div className="flex items-center gap-1">
-                            <span>Volume: {phase.weekly_volume_target_km} km/wk...</span>
-                          </div>
-                        </div>
-                      )}
-                      {width < 120 && (
-                        <div className={cn("text-xs space-y-0.5", colors.text, "opacity-80", "flex gap-5")}>
-                          <div className="flex items-center gap-1">
-                            <span>Volume...</span>
-                          </div>
-                        </div>
-                      )}
                     </div>
                   </div>
                 );
@@ -442,15 +420,16 @@ export default function TimelineCanvas({ races, phases, onCreateRace, createRace
         </div>
       </div>
       <RaceDetailsDialog open={openRaceDetails} onOpenChange={setOpenRaceDetails} race={selectedRace} />
-      <PhaseDetailsDialog open={openPhaseDetails} onOpenChange={setOpenPhaseDetails} phase={selectedPhase} />
       {onCreateRace && (
-        <CreateRaceDialog
-          open={openCreateRace}
-          onOpenChange={setOpenCreateRace}
-          onSubmit={onCreateRace}
-          loading={createRaceLoading}
-        />
+        <CreateRaceDialog open={openCreateRace} onOpenChange={setOpenCreateRace} onSubmit={onCreateRace} loading={raceLoading.create} />
       )}
+      <CreateTrainingCycleDialog
+        open={openCreateTrainingCycle}
+        onOpenChange={setOpenCreateTrainingCycle}
+        onSubmit={onCreateTrainingCycle}
+        loading={trainingCycleLoading.create}
+        races={races}
+      />
     </div>
   );
 }

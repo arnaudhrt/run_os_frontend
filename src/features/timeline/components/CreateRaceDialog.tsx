@@ -1,48 +1,36 @@
-import { useState } from "react";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/lib/ui/dialog";
+import { Dialog, DialogContent } from "@/lib/ui/dialog";
 import { Button } from "@/lib/ui/button";
 import { Input } from "@/lib/ui/input";
-import { Label } from "@/lib/ui/label";
-import { Textarea } from "@/lib/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/lib/ui/select";
-import { Loader2, Plus, X } from "lucide-react";
+import { Loader2, ArrowRight, ArrowLeft, Check } from "lucide-react";
 import { raceTypes, type RaceType } from "@/lib/types/type";
-import { Popover, PopoverContent, PopoverTrigger } from "@/lib/ui/popover";
+import { cn } from "@/lib/utils";
+import { useCreateRaceStore } from "../stores/create-race.store";
 
 interface CreateRaceDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: CreateRaceParams) => void;
+  onSubmit: (data: CreateRaceData) => void;
   loading?: boolean;
 }
 
-export interface CreateRaceParams {
+interface CreateRaceData {
   name: string;
   raceDate: Date;
   raceType: RaceType;
   priority: 1 | 2 | 3;
   isCompleted: boolean;
-  elevation?: number;
   distance?: number;
-  targetTime?: number;
-  location?: string;
-  notes?: string;
+  elevation?: number;
   onClose: () => void;
 }
 
-const optionalFieldsInitial = [
-  { value: "elevation", label: "Elevation Gain" },
-  { value: "distance", label: "Distance" },
-  { value: "targetTime", label: "Target Time" },
-  { value: "location", label: "Location" },
-  { value: "notes", label: "Notes" },
-];
+const priorityOptions = [
+  { value: 1, label: "Primary", description: "Your main goal race" },
+  { value: 2, label: "Secondary", description: "Important but not the focus" },
+  { value: 3, label: "Training", description: "Part of your preparation" },
+] as const;
 
-const priorityLabels: Record<1 | 2 | 3, string> = {
-  1: "Primary race",
-  2: "Secondary race",
-  3: "Training race",
-};
+const TOTAL_STEPS = 5;
 
 function formatRaceType(type: string): string {
   return type
@@ -52,255 +40,237 @@ function formatRaceType(type: string): string {
 }
 
 export function CreateRaceDialog({ open, onOpenChange, onSubmit, loading }: CreateRaceDialogProps) {
-  const [name, setName] = useState("");
-  const [raceDate, setRaceDate] = useState(() => {
-    const now = new Date();
-    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-    return now.toISOString().slice(0, 10);
-  });
-  const [raceType, setRaceType] = useState<RaceType>("marathon");
-  const [priority, setPriority] = useState<1 | 2 | 3>(1);
+  const {
+    step,
+    direction,
+    name,
+    raceDate,
+    raceType,
+    priority,
+    distance,
+    elevation,
+    setName,
+    setRaceDate,
+    setRaceType,
+    setPriority,
+    setDistance,
+    setElevation,
+    goNext,
+    goBack,
+    reset,
+  } = useCreateRaceStore();
 
-  // Optional fields
-  const [selectedFields, setSelectedFields] = useState<{ value: string; label: string }[]>([]);
-  const [optionalFields, setOptionalFields] = useState<{ value: string; label: string }[]>(optionalFieldsInitial);
-  const [openOptions, setOpenOptions] = useState(false);
-  const [elevation, setElevation] = useState("");
-  const [distance, setDistance] = useState("");
-  const [targetHours, setTargetHours] = useState("");
-  const [targetMinutes, setTargetMinutes] = useState("");
-  const [targetSeconds, setTargetSeconds] = useState("");
-  const [location, setLocation] = useState("");
-  const [notes, setNotes] = useState("");
+  const isTrailRace = raceType === "trail" || raceType === "ultra_trail";
 
-  const addField = (field: { value: string; label: string }) => {
-    setSelectedFields((prev) => [...prev, field]);
-    setOptionalFields((prev) => prev.filter((f) => f.value !== field.value));
-  };
-
-  const removeField = (field: { value: string; label: string }) => {
-    setSelectedFields((prev) => prev.filter((f) => f !== field));
-    setOptionalFields((prev) => [...prev, field]);
-    switch (field.value) {
-      case "elevation":
-        setElevation("");
-        break;
-      case "distance":
-        setDistance("");
-        break;
-      case "targetTime":
-        setTargetHours("");
-        setTargetMinutes("");
-        setTargetSeconds("");
-        break;
-      case "location":
-        setLocation("");
-        break;
-      case "notes":
-        setNotes("");
-        break;
-    }
-  };
-
-  const resetForm = () => {
-    setName("");
-    const now = new Date();
-    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-    setRaceDate(now.toISOString().slice(0, 10));
-    setRaceType("marathon");
-    setPriority(1);
-    setSelectedFields([]);
-    setOptionalFields(optionalFieldsInitial);
-    setElevation("");
-    setDistance("");
-    setTargetHours("");
-    setTargetMinutes("");
-    setTargetSeconds("");
-    setLocation("");
-    setNotes("");
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen) reset();
+    onOpenChange(newOpen);
   };
 
   const handleSubmit = () => {
-    const fields = selectedFields.map((f) => f.value);
-    const targetTimeSeconds = parseInt(targetHours || "0") * 3600 + parseInt(targetMinutes || "0") * 60 + parseInt(targetSeconds || "0");
-
     onSubmit({
       name,
       raceDate: new Date(raceDate),
       raceType,
       priority,
       isCompleted: false,
-      ...(fields.includes("elevation") && elevation && { elevation: parseFloat(elevation) }),
-      ...(fields.includes("distance") && distance && { distance: parseFloat(distance) * 1000 }),
-      ...(fields.includes("targetTime") && targetTimeSeconds > 0 && { targetTime: targetTimeSeconds }),
-      ...(fields.includes("location") && location && { location }),
-      ...(fields.includes("notes") && notes && { notes }),
+      ...(distance && { distance: parseFloat(distance) * 1000 }),
+      ...(elevation && isTrailRace && { elevation: parseFloat(elevation) }),
       onClose: () => {
-        resetForm();
+        reset();
         onOpenChange(false);
       },
     });
   };
 
-  const handleOpenChange = (newOpen: boolean) => {
-    if (!newOpen) resetForm();
-    onOpenChange(newOpen);
+  const handleNext = () => {
+    if (step < TOTAL_STEPS - 1) {
+      goNext();
+    } else {
+      handleSubmit();
+    }
+  };
+
+  const canProceed = () => {
+    switch (step) {
+      case 0:
+        return name.trim().length > 0;
+      case 1:
+        return raceDate.length > 0;
+      case 2:
+        return raceType !== undefined;
+      case 3:
+      case 4:
+        return true;
+      default:
+        return false;
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && canProceed()) {
+      e.preventDefault();
+      handleNext();
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-lg!">
-        <DialogHeader>
-          <DialogTitle>Create Race</DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-4 max-h-[600px]! scrollable overflow-y-auto!">
-          {/* Race Name */}
-          <div className="space-y-1.5">
-            <Label>Race Name</Label>
-            <Input type="text" placeholder="e.g. Paris Marathon" value={name} onChange={(e) => setName(e.target.value)} />
-          </div>
-
-          {/* Race Type & Priority */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label>Race Type</Label>
-              <Select value={raceType} onValueChange={(v) => setRaceType(v as RaceType)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="p-1">
-                  {raceTypes.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {formatRaceType(type)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label>Priority</Label>
-              <Select value={priority.toString()} onValueChange={(v) => setPriority(parseInt(v) as 1 | 2 | 3)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {([1, 2, 3] as const).map((p) => (
-                    <SelectItem key={p} value={p.toString()}>
-                      {priorityLabels[p]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label>Race Date</Label>
-            <Input type="date" value={raceDate} onChange={(e) => setRaceDate(e.target.value)} />
-          </div>
-
-          {/* Optional Fields */}
-          {selectedFields.map((field) => (
-            <div key={field.value} className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <Label>{field.label}</Label>
-                <button type="button" onClick={() => removeField(field)} className="text-muted-foreground hover:text-foreground p-0.5">
-                  <X className="size-3.5" />
-                </button>
-              </div>
-
-              {field.value === "elevation" && (
-                <div className="flex items-center gap-2">
-                  <Input type="number" placeholder="0" value={elevation} onChange={(e) => setElevation(e.target.value)} />
-                  <span className="text-sm text-muted-foreground w-8">m</span>
-                </div>
-              )}
-
-              {field.value === "distance" && (
-                <div className="flex items-center gap-2">
-                  <Input type="number" step="0.01" placeholder="0.00" value={distance} onChange={(e) => setDistance(e.target.value)} />
-                  <span className="text-sm text-muted-foreground w-8">km</span>
-                </div>
-              )}
-
-              {field.value === "targetTime" && (
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="number"
-                    min="0"
-                    placeholder="0"
-                    value={targetHours}
-                    onChange={(e) => setTargetHours(e.target.value)}
-                    className="w-20"
-                  />
-                  <span className="text-xs text-muted-foreground">h</span>
-                  <Input
-                    type="number"
-                    min="0"
-                    max="59"
-                    placeholder="0"
-                    value={targetMinutes}
-                    onChange={(e) => setTargetMinutes(e.target.value)}
-                    className="w-20"
-                  />
-                  <span className="text-xs text-muted-foreground">m</span>
-                  <Input
-                    type="number"
-                    min="0"
-                    max="59"
-                    placeholder="0"
-                    value={targetSeconds}
-                    onChange={(e) => setTargetSeconds(e.target.value)}
-                    className="w-20"
-                  />
-                  <span className="text-xs text-muted-foreground">s</span>
-                </div>
-              )}
-
-              {field.value === "location" && (
-                <Input type="text" placeholder="e.g. Paris, France" value={location} onChange={(e) => setLocation(e.target.value)} />
-              )}
-
-              {field.value === "notes" && (
-                <Textarea placeholder="Add notes about this race..." value={notes} onChange={(e) => setNotes(e.target.value)} className="min-h-20" />
-              )}
-            </div>
-          ))}
-
-          {optionalFields.length > 0 && (
-            <Popover open={openOptions} onOpenChange={setOpenOptions}>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="w-full border-dashed text-muted-foreground">
-                  <Plus className="w-4 h-4 text-primary" />
-                  Add Field
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="gap-0">
-                {optionalFields.map((el, i) => (
-                  <div
-                    key={i}
-                    className="rounded-md py-1 pr-8 pl-1.5 text-sm hover:bg-accent cursor-pointer"
-                    onClick={() => {
-                      addField(el);
-                      setOpenOptions(false);
-                    }}
-                  >
-                    {el.label}
-                  </div>
-                ))}
-              </PopoverContent>
-            </Popover>
-          )}
+      <DialogContent className="max-w-md! p-0! overflow-hidden">
+        {/* Progress bar */}
+        <div className="h-1 bg-muted">
+          <div className="h-full bg-primary transition-all duration-300 ease-out" style={{ width: `${((step + 1) / TOTAL_STEPS) * 100}%` }} />
         </div>
 
-        <DialogFooter>
-          <Button onClick={handleSubmit} disabled={loading || !name.trim()}>
-            Create Race
-            {loading && <Loader2 className="size-4 animate-spin mr-1" />}
-          </Button>
-        </DialogFooter>
+        <div className="p-6 min-h-[280px] flex flex-col">
+          {/* Step indicator */}
+          <div className="text-xs text-muted-foreground mb-6">
+            Step {step + 1} of {TOTAL_STEPS}
+          </div>
+
+          {/* Content area with transitions */}
+          <div className="flex-1 flex flex-col">
+            <div
+              key={step}
+              className={cn(
+                "flex-1 flex flex-col animate-in duration-200",
+                direction === "forward" ? "slide-in-from-right-4" : "slide-in-from-left-4",
+                "fade-in"
+              )}
+            >
+              {/* Step 0: Name */}
+              {step === 0 && (
+                <div className="space-y-4">
+                  <h2 className="text-xl font-medium">What's the race called?</h2>
+                  <Input
+                    type="text"
+                    placeholder="e.g. Paris Marathon"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    autoFocus
+                    className="text-lg h-12"
+                  />
+                </div>
+              )}
+
+              {/* Step 1: Date */}
+              {step === 1 && (
+                <div className="space-y-4">
+                  <h2 className="text-xl font-medium">When is it?</h2>
+                  <Input
+                    type="date"
+                    value={raceDate}
+                    onChange={(e) => setRaceDate(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    autoFocus
+                    className="text-lg h-12"
+                  />
+                </div>
+              )}
+
+              {/* Step 2: Race Type */}
+              {step === 2 && (
+                <div className="space-y-4">
+                  <h2 className="text-xl font-medium">What type of race?</h2>
+                  <div className="flex flex-wrap gap-2">
+                    {raceTypes.map((type) => (
+                      <Button
+                        key={type}
+                        variant="outline"
+                        size="sm"
+                        className={`${raceType === type && "bg-muted/50 ring-2 ring-primary ring-offset-1"}`}
+                        onClick={() => setRaceType(type)}
+                      >
+                        {formatRaceType(type)}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Step 3: Priority */}
+              {step === 3 && (
+                <div className="space-y-4">
+                  <h2 className="text-xl font-medium">How important is this race?</h2>
+                  <div className="grid gap-2">
+                    {priorityOptions.map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => setPriority(option.value)}
+                        className={cn(
+                          "p-3 rounded-lg border text-left transition-all",
+                          priority === option.value ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
+                        )}
+                      >
+                        <div className="font-medium">{option.label}</div>
+                        <div className="text-sm text-muted-foreground">{option.description}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Step 4: Distance & Elevation */}
+              {step === 4 && (
+                <div className="space-y-4">
+                  <h2 className="text-xl font-medium">Race details</h2>
+                  <p className="text-sm text-muted-foreground -mt-2">Optional - you can skip this</p>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="Distance"
+                        value={distance}
+                        onChange={(e) => setDistance(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        className="h-12"
+                      />
+                      <span className="text-muted-foreground w-8">km</span>
+                    </div>
+                    {isTrailRace && (
+                      <div className="flex items-center gap-3">
+                        <Input
+                          type="number"
+                          placeholder="Elevation gain"
+                          value={elevation}
+                          onChange={(e) => setElevation(e.target.value)}
+                          onKeyDown={handleKeyDown}
+                          className="h-12"
+                        />
+                        <span className="text-muted-foreground w-8">m</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Navigation */}
+          <div className="flex items-center justify-between mt-6 pt-4 border-t">
+            <Button variant="ghost" onClick={goBack} disabled={step === 0} className="gap-1">
+              <ArrowLeft className="size-4" />
+              Back
+            </Button>
+
+            <Button onClick={handleNext} disabled={!canProceed() || loading} className="gap-1">
+              {step === TOTAL_STEPS - 1 ? (
+                <>
+                  Create Race
+                  {loading ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
+                </>
+              ) : (
+                <>
+                  Continue
+                  <ArrowRight className="size-4" />
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );

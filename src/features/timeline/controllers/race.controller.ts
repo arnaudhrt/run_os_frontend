@@ -7,7 +7,7 @@ import { createRace, deleteRace, getRaceById, getRaces, updateRace } from "../da
 import type { RaceType } from "@/lib/types/type";
 import { validateCreateRaceFields, validateUpdateRaceFields } from "../validations/race.validation";
 
-interface LoadingState {
+export interface RaceLoadingState {
   get: boolean;
   getAll: boolean;
   update: boolean;
@@ -15,12 +15,26 @@ interface LoadingState {
   delete: boolean;
 }
 
+export interface CreateRaceParams {
+  name: string;
+  raceDate: Date;
+  raceType: RaceType;
+  priority: 1 | 2 | 3;
+  isCompleted: boolean;
+  elevation?: number;
+  distance?: number;
+  targetTime?: number;
+  location?: string;
+  notes?: string;
+  onClose: () => void;
+}
+
 export const useRaceController = () => {
   const [validationsErrors, setValidationsErrors] = useState<Record<string, string> | null>(null);
   const [races, setRaces] = useState<RaceModel[] | null>(null);
   const [race, setRace] = useState<RaceModel | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
-  const [loading, setLoading] = useState<LoadingState>({
+  const [loading, setLoading] = useState<RaceLoadingState>({
     create: false,
     delete: false,
     get: false,
@@ -77,19 +91,7 @@ export const useRaceController = () => {
     location,
     notes,
     onClose,
-  }: {
-    name: string;
-    raceDate: Date;
-    raceType: RaceType;
-    priority: 1 | 2 | 3;
-    isCompleted: boolean;
-    elevation?: number;
-    distance?: number;
-    targetTime?: number;
-    location?: string;
-    notes?: string;
-    onClose: () => void;
-  }): Promise<void> => {
+  }: CreateRaceParams): Promise<void> => {
     setLoading((prev) => ({ ...prev, create: true }));
     setValidationsErrors(null);
     setApiError(null);
