@@ -8,7 +8,7 @@ export default function HorizonPage() {
   const today = useMemo(() => new Date(), []);
   const currentYear = today.getFullYear();
   const { races, handleCreateRace, loading: raceLoading } = useRaceController();
-  const { handleCreateTrainingCycle, loading: trainingCycleLoading } = useTrainingCycleController(currentYear);
+  const { handleCreateTrainingCycle, loading: trainingCycleLoading, trainingCycleList } = useTrainingCycleController(currentYear);
 
   return (
     <section className="p-8">
@@ -16,7 +16,7 @@ export default function HorizonPage() {
       <div className="mt-12">
         <TimelineCanvas
           races={races || []}
-          phases={[]}
+          trainingCycles={trainingCycleList}
           today={today}
           onCreateRace={handleCreateRace}
           onCreateTrainingCycle={handleCreateTrainingCycle}

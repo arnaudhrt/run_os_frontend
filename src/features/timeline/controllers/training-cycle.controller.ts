@@ -31,7 +31,7 @@ export interface CreateTrainingCycleParams {
 export const useTrainingCycleController = (year: number) => {
   const [validationsErrors, setValidationsErrors] = useState<Record<string, string> | null>(null);
   const [trainingCycle, setTrainingCycle] = useState<TrainingCycleModel | null>(null);
-  const [trainingCycleList, setTrainingCycleList] = useState<TrainingCycleModel[] | null>(null);
+  const [trainingCycleList, setTrainingCycleList] = useState<TrainingCycleModel[]>([]);
   const [apiError, setApiError] = useState<string | null>(null);
   const [loading, setLoading] = useState<TrainingCycleLoadingState>({
     create: false,
@@ -104,6 +104,7 @@ export const useTrainingCycleController = (year: number) => {
     if (!success || !data) {
       setValidationsErrors(errors);
       setLoading((prev) => ({ ...prev, create: false }));
+      console.error(errors);
       return;
     }
     try {

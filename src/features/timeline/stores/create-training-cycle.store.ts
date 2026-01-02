@@ -39,6 +39,8 @@ interface CreateTrainingCycleState {
   setStartDate: (date: Date) => void;
   initializePhases: (totalWeeks: number) => void;
   updatePhaseWeeks: (phaseType: PhaseType, weeks: number) => void;
+  removePhase: (phaseType: PhaseType) => void;
+  addPhase: (phaseType: PhaseType) => void;
 
   // Navigation
   goNext: () => void;
@@ -114,7 +116,17 @@ export const useCreateTrainingCycleStore = create<CreateTrainingCycleState>((set
 
   updatePhaseWeeks: (phaseType, weeks) =>
     set((state) => ({
-      phases: state.phases.map((p) => (p.phaseType === phaseType ? { ...p, duration_weeks: Math.max(1, weeks) } : p)),
+      phases: state.phases.map((p) => (p.phaseType === phaseType ? { ...p, durationWeeks: Math.max(1, weeks) } : p)),
+    })),
+
+  removePhase: (phaseType) =>
+    set((state) => ({
+      phases: state.phases.filter((p) => p.phaseType !== phaseType),
+    })),
+
+  addPhase: (phaseType) =>
+    set((state) => ({
+      phases: [...state.phases, { phaseType, durationWeeks: 1 }],
     })),
 
   goNext: () =>

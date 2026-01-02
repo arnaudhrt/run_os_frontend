@@ -1,7 +1,7 @@
 import type { CreateTrainingCycleModel, TrainingCycleModel } from "../models/training-cycle.model";
 
 export async function getTrainingCycles({ token, year }: { token: string; year: number }): Promise<TrainingCycleModel[]> {
-  const url = new URL(`${import.meta.env.VITE_API_URL}/v1/training_cycles`);
+  const url = new URL(`${import.meta.env.VITE_API_URL}/v1/training-cycles`);
   url.searchParams.append("year", year.toString());
 
   const response = await fetch(url, {
@@ -22,7 +22,7 @@ export async function getTrainingCycles({ token, year }: { token: string; year: 
 }
 
 export async function getTrainingCycleById({ id, token }: { id: string; token: string }): Promise<TrainingCycleModel | null> {
-  const url = new URL(`${import.meta.env.VITE_API_URL}/v1/training_cycles/${id}`);
+  const url = new URL(`${import.meta.env.VITE_API_URL}/v1/training-cycles/${id}`);
 
   const response = await fetch(url, {
     method: "GET",
@@ -42,7 +42,7 @@ export async function getTrainingCycleById({ id, token }: { id: string; token: s
 }
 
 export async function createTrainingCycle({ body, token }: { body: CreateTrainingCycleModel; token: string }): Promise<void> {
-  const url = new URL(`${import.meta.env.VITE_API_URL}/v1/training_cycles`);
+  const url = new URL(`${import.meta.env.VITE_API_URL}/v1/training-cycles`);
   const response = await fetch(url, {
     method: "POST",
     headers: {
@@ -59,7 +59,7 @@ export async function createTrainingCycle({ body, token }: { body: CreateTrainin
 }
 
 export async function updateTrainingCycle({ id, body, token }: { id: string; body: CreateTrainingCycleModel; token: string }): Promise<void> {
-  const url = new URL(`${import.meta.env.VITE_API_URL}/v1/training_cycles/${id}`);
+  const url = new URL(`${import.meta.env.VITE_API_URL}/v1/training-cycles/${id}`);
   const response = await fetch(url, {
     method: "PUT",
     headers: {
@@ -76,7 +76,7 @@ export async function updateTrainingCycle({ id, body, token }: { id: string; bod
 }
 
 export async function deleteTrainingCycle({ id, token }: { id: string; token: string }): Promise<void> {
-  const url = new URL(`${import.meta.env.VITE_API_URL}/v1/training_cycles/${id}`);
+  const url = new URL(`${import.meta.env.VITE_API_URL}/v1/training-cycles/${id}`);
   const response = await fetch(url, {
     method: "DELETE",
     headers: {

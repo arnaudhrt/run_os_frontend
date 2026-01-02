@@ -9,7 +9,6 @@ const phaseInputSchema = z.object({
 const createPhaseSchema = z.object({
   raceId: z.string().optional(),
   name: z.string().min(1, "Name is required"),
-  phaseType: z.enum(phaseTypes, { message: "Phase type is required" }),
   startDate: z.date({ message: "Start date is required" }),
   endDate: z.date({ message: "End date is required" }),
   phases: z.array(phaseInputSchema).min(1),

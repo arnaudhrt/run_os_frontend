@@ -2,7 +2,8 @@ import { useRef, useEffect, useMemo, useState, useCallback } from "react";
 import { Flag, Trophy, Medal, ChevronLeft, ChevronRight, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { RaceModel } from "../models/race.model";
-import type { PhaseModel } from "../models/phase.model";
+import type { TrainingCycleModel } from "../models/training-cycle.model";
+import type { ComputedPhaseModel } from "../models/phase.model";
 import type { PhaseType } from "@/lib/types/type";
 import { ButtonGroup } from "@/lib/ui/button-group";
 import { Button } from "@/lib/ui/button";
@@ -16,7 +17,7 @@ import type { CreateTrainingCycleParams, TrainingCycleLoadingState } from "../co
 
 interface TimelineCanvasProps {
   races: RaceModel[];
-  phases: PhaseModel[];
+  trainingCycles: TrainingCycleModel[];
   raceLoading: RaceLoadingState;
   trainingCycleLoading: TrainingCycleLoadingState;
   onCreateRace: (data: CreateRaceParams) => void;
@@ -99,9 +100,37 @@ function generateYearOptions(currentYear: number): number[] {
   return years;
 }
 
+/** Compute phases with start_date and end_date from training cycles */
+function computePhasesFromCycles(trainingCycles: TrainingCycleModel[]): ComputedPhaseModel[] {
+  const computedPhases: ComputedPhaseModel[] = [];
+
+  for (const cycle of trainingCycles) {
+    const cycleStartDate = new Date(cycle.start_date);
+    // Sort phases by order to ensure correct sequence
+    const sortedPhases = [...cycle.phases].sort((a, b) => a.order - b.order);
+
+    let currentDate = cycleStartDate;
+
+    for (const phase of sortedPhases) {
+      const phaseStartDate = new Date(currentDate);
+      const phaseEndDate = addWeeks(phaseStartDate, phase.duration_weeks);
+
+      computedPhases.push({
+        ...phase,
+        start_date: phaseStartDate.toISOString(),
+        end_date: phaseEndDate.toISOString(),
+      });
+
+      currentDate = phaseEndDate;
+    }
+  }
+
+  return computedPhases;
+}
+
 export default function TimelineCanvas({
   races,
-  phases,
+  trainingCycles,
   today,
   currentYear,
   onCreateRace,
@@ -118,6 +147,9 @@ export default function TimelineCanvas({
   const containerRef = useRef<HTMLDivElement>(null);
 
   const yearOptions = useMemo(() => generateYearOptions(currentYear), [currentYear]);
+
+  // Compute phases with dates from training cycles
+  const computedPhases = useMemo(() => computePhasesFromCycles(trainingCycles), [trainingCycles]);
 
   const [zoomMode, setZoomMode] = useState<ZoomMode>("6m");
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
@@ -360,7 +392,7 @@ export default function TimelineCanvas({
               </div>
 
               {/* Phase Blocks */}
-              {phases.map((phase) => {
+              {computedPhases.map((phase) => {
                 const position = getPositionForDate(phase.start_date);
                 const width = getWidthForDateRange(phase.start_date, phase.end_date);
 

@@ -2,11 +2,11 @@ import { useMemo, useEffect } from "react";
 import { Dialog, DialogContent } from "@/lib/ui/dialog";
 import { Button } from "@/lib/ui/button";
 import { Input } from "@/lib/ui/input";
-import { Loader2, ArrowRight, ArrowLeft, Check } from "lucide-react";
+import { Loader2, ArrowRight, ArrowLeft, Check, X, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCreateTrainingCycleStore } from "../stores/create-training-cycle.store";
 import type { RaceModel } from "../models/race.model";
-import type { PhaseType } from "@/lib/types/type";
+import { type PhaseType, phaseTypes } from "@/lib/types/type";
 import type { CreateTrainingCycleParams } from "../controllers/training-cycle.controller";
 import { format } from "date-fns";
 
@@ -80,6 +80,8 @@ export function CreateTrainingCycleDialog({ open, onOpenChange, onSubmit, loadin
     setStartDate,
     initializePhases,
     updatePhaseWeeks,
+    removePhase,
+    addPhase,
     goNext,
     goBack,
     reset,
@@ -106,6 +108,12 @@ export function CreateTrainingCycleDialog({ open, onOpenChange, onSubmit, loadin
   }, [phases]);
 
   const phasesMatch = totalPhaseWeeks === duration.weeks;
+
+  // Get phases that are not yet added
+  const availablePhases = useMemo(() => {
+    const activePhaseTypes = new Set(phases.map((p) => p.phaseType));
+    return phaseTypes.filter((pt) => !activePhaseTypes.has(pt));
+  }, [phases]);
 
   // Initialize phases when entering step 3
   useEffect(() => {
@@ -135,6 +143,7 @@ export function CreateTrainingCycleDialog({ open, onOpenChange, onSubmit, loadin
   };
 
   const handleNext = () => {
+    console.log("Click");
     if (step < TOTAL_STEPS - 1) {
       goNext();
     } else {
@@ -255,8 +264,11 @@ export function CreateTrainingCycleDialog({ open, onOpenChange, onSubmit, loadin
                   {endDateMode === "manual" && (
                     <Input
                       type="date"
-                      value={format(manualEndDate, "yyyy-MM-dd")}
-                      onChange={(e) => setManualEndDate(new Date(e.target.value))}
+                      value={manualEndDate ? format(manualEndDate, "yyyy-MM-dd") : ""}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value) setManualEndDate(new Date(value));
+                      }}
                       className="h-12"
                     />
                   )}
@@ -269,8 +281,11 @@ export function CreateTrainingCycleDialog({ open, onOpenChange, onSubmit, loadin
                   <h2 className="text-xl font-medium">When does it start?</h2>
                   <Input
                     type="date"
-                    value={format(startDate, "yyyy-MM-dd")}
-                    onChange={(e) => setStartDate(new Date(e.target.value))}
+                    value={startDate ? format(startDate, "yyyy-MM-dd") : ""}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value) setStartDate(new Date(value));
+                    }}
                     onKeyDown={handleKeyDown}
                     className="h-12"
                   />
@@ -311,14 +326,48 @@ export function CreateTrainingCycleDialog({ open, onOpenChange, onSubmit, loadin
                             type="number"
                             min={1}
                             value={phase.durationWeeks}
-                            onChange={(e) => updatePhaseWeeks(phase.phaseType, parseInt(e.target.value) || 1)}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              if (value) updatePhaseWeeks(phase.phaseType, parseInt(value) || 1);
+                            }}
                             className="h-8 w-16 text-center bg-background"
                           />
-                          <span className="text-xs text-muted-foreground w-10">weeks</span>
+                          <span className="text-xs text-muted-foreground w-8">weeks</span>
                         </div>
+                        <button
+                          type="button"
+                          onClick={() => removePhase(phase.phaseType)}
+                          className="p-1 rounded hover:bg-background/80 text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
+                        >
+                          <X className="size-4" />
+                        </button>
                       </div>
                     ))}
                   </div>
+
+                  {/* Add phase buttons */}
+                  {availablePhases.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {availablePhases.map((phaseType) => {
+                        if (phaseType === "off" || phaseType === "recovery") {
+                          return null;
+                        }
+                        return (
+                          <Button
+                            key={phaseType}
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => addPhase(phaseType)}
+                            className={cn("capitalize gap-1")}
+                          >
+                            <Plus className="size-3" />
+                            {phaseType}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  )}
 
                   {!phasesMatch && <p className="text-sm text-destructive">Total weeks must equal {duration.weeks} to continue</p>}
                 </div>
