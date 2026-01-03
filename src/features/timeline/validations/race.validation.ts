@@ -8,7 +8,7 @@ const createRaceSchema = z.object({
   priority: z.union([z.literal(1), z.literal(2), z.literal(3)], { message: "Priority must be 1, 2, or 3" }),
   isCompleted: z.boolean(),
   elevation: z.number().optional(),
-  distance: z.number().optional(),
+  distance: z.number(),
   targetTime: z.number().optional(),
   location: z.string().optional(),
   notes: z.string().optional(),

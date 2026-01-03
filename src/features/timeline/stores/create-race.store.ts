@@ -14,6 +14,13 @@ interface CreateRaceState {
   distance: string;
   elevation: string;
 
+  // Result fields (for past races)
+  resultTime: string; // format: "HH:MM:SS"
+  resultPlaceOverall: string;
+  resultPlaceGender: string;
+  resultPlaceCategory: string;
+  categoryName: string;
+
   // Actions
   setStep: (step: number) => void;
   setDirection: (direction: "forward" | "backward") => void;
@@ -23,6 +30,11 @@ interface CreateRaceState {
   setPriority: (priority: 1 | 2 | 3) => void;
   setDistance: (distance: string) => void;
   setElevation: (elevation: string) => void;
+  setResultTime: (time: string) => void;
+  setResultPlaceOverall: (place: string) => void;
+  setResultPlaceGender: (place: string) => void;
+  setResultPlaceCategory: (place: string) => void;
+  setCategoryName: (name: string) => void;
 
   // Navigation
   goNext: () => void;
@@ -47,6 +59,11 @@ const initialState = {
   priority: 1 as const,
   distance: "",
   elevation: "",
+  resultTime: "",
+  resultPlaceOverall: "",
+  resultPlaceGender: "",
+  resultPlaceCategory: "",
+  categoryName: "",
 };
 
 export const useCreateRaceStore = create<CreateRaceState>((set) => ({
@@ -69,6 +86,11 @@ export const useCreateRaceStore = create<CreateRaceState>((set) => ({
   setPriority: (priority) => set({ priority }),
   setDistance: (distance) => set({ distance }),
   setElevation: (elevation) => set({ elevation }),
+  setResultTime: (resultTime) => set({ resultTime }),
+  setResultPlaceOverall: (resultPlaceOverall) => set({ resultPlaceOverall }),
+  setResultPlaceGender: (resultPlaceGender) => set({ resultPlaceGender }),
+  setResultPlaceCategory: (resultPlaceCategory) => set({ resultPlaceCategory }),
+  setCategoryName: (categoryName) => set({ categoryName }),
 
   goNext: () =>
     set((state) => ({

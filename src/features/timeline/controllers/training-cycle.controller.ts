@@ -4,8 +4,8 @@ import { handleError } from "@/lib/errors/clientErrors.handler";
 import { getFreshIdToken } from "@/lib/firebase/token";
 import type { PhaseType } from "@/lib/types/type";
 import { validateCreatePhaseFields } from "../validations/phase.validation";
-import type { TrainingCycleModel } from "../models/training-cycle.model";
-import { createTrainingCycle, deleteTrainingCycle, getTrainingCycleById, getTrainingCycles } from "../data/training-cycle.data";
+import type { TrainingCycleModel, WeeklyStats } from "../models/training-cycle.model";
+import { createTrainingCycle, deleteTrainingCycle, getTrainingCycleById, getTrainingCycles, getWeeklyStats } from "../data/training-cycle.data";
 
 export interface TrainingCycleLoadingState {
   get: boolean;
@@ -13,6 +13,7 @@ export interface TrainingCycleLoadingState {
   update: boolean;
   create: boolean;
   delete: boolean;
+  stats: boolean;
 }
 
 export interface CreateTrainingCycleParams {
@@ -32,6 +33,7 @@ export const useTrainingCycleController = (year: number) => {
   const [validationsErrors, setValidationsErrors] = useState<Record<string, string> | null>(null);
   const [trainingCycle, setTrainingCycle] = useState<TrainingCycleModel | null>(null);
   const [trainingCycleList, setTrainingCycleList] = useState<TrainingCycleModel[]>([]);
+  const [weeklyStats, setWeeklyStats] = useState<WeeklyStats[]>([]);
   const [apiError, setApiError] = useState<string | null>(null);
   const [loading, setLoading] = useState<TrainingCycleLoadingState>({
     create: false,
@@ -39,6 +41,7 @@ export const useTrainingCycleController = (year: number) => {
     get: false,
     getAll: false,
     update: false,
+    stats: false,
   });
 
   const handleFetchAllTrainingCycles = async (): Promise<TrainingCycleModel[] | null> => {
@@ -80,6 +83,23 @@ export const useTrainingCycleController = (year: number) => {
     }
   };
 
+  const handleFetchWeeklyStats = async (): Promise<WeeklyStats[]> => {
+    setLoading((prev) => ({ ...prev, stats: true }));
+    setApiError(null);
+    try {
+      const token = await getFreshIdToken();
+      const data = await getWeeklyStats({ token, year });
+      setWeeklyStats(data);
+      return data;
+    } catch (err) {
+      const errorMessage = handleError(err);
+      setApiError(errorMessage);
+      return [];
+    } finally {
+      setLoading((prev) => ({ ...prev, stats: false }));
+    }
+  };
+
   const handleCreateTrainingCycle = async ({
     raceId,
     startDate,
@@ -91,7 +111,6 @@ export const useTrainingCycleController = (year: number) => {
   }: CreateTrainingCycleParams): Promise<void> => {
     setLoading((prev) => ({ ...prev, create: true }));
     setValidationsErrors(null);
-    setApiError(null);
 
     const { success, errors, data } = validateCreatePhaseFields({
       raceId,
@@ -102,9 +121,9 @@ export const useTrainingCycleController = (year: number) => {
       phases,
     });
     if (!success || !data) {
-      setValidationsErrors(errors);
-      setLoading((prev) => ({ ...prev, create: false }));
       console.error(errors);
+      toast.error("Invalid fields, please control your inputs and try again");
+      setLoading((prev) => ({ ...prev, create: false }));
       return;
     }
     try {
@@ -115,7 +134,8 @@ export const useTrainingCycleController = (year: number) => {
         end_date: data.endDate.toISOString(),
         name: data.name,
         total_weeks: data.totalWeeks,
-        phases: data.phases.map((phase) => ({
+        phases: data.phases.map((phase, i) => ({
+          order: i + 1,
           phase_type: phase.phaseType,
           duration_weeks: phase.durationWeeks,
         })),
@@ -126,7 +146,7 @@ export const useTrainingCycleController = (year: number) => {
       onClose();
     } catch (err) {
       const errorMessage = handleError(err);
-      setApiError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading((prev) => ({ ...prev, create: false }));
     }
@@ -158,6 +178,7 @@ export const useTrainingCycleController = (year: number) => {
 
   useEffect(() => {
     handleFetchAllTrainingCycles();
+    handleFetchWeeklyStats();
   }, [year]);
 
   return {
@@ -165,10 +186,12 @@ export const useTrainingCycleController = (year: number) => {
     handleFetchTrainingCycleById,
     handleCreateTrainingCycle,
     handleDeleteTrainingCycle,
+    handleFetchWeeklyStats,
     validationsErrors,
     apiError,
     loading,
     trainingCycleList,
     trainingCycle,
+    weeklyStats,
   };
 };

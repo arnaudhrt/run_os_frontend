@@ -87,7 +87,7 @@ export function RaceDetailsDialog({ race, open, onOpenChange }: { race: RaceMode
                 </div>
                 <div>
                   <div className="text-[10px] text-green-600 font-bold uppercase">Place</div>
-                  <div className="font-mono font-bold text-lg">{race.result_place || "-"}</div>
+                  <div className="font-mono font-bold text-lg">{race.result_place_overall || "-"}</div>
                 </div>
               </div>
             </section>

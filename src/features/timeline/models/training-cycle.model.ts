@@ -19,7 +19,15 @@ export interface CreateTrainingCycleModel {
   start_date: string;
   end_date: string;
   phases: {
+    order: number;
     phase_type: PhaseType;
     duration_weeks: number;
   }[];
+}
+
+export interface WeeklyStats {
+  week: string; // format: "2025W1"
+  volume: number; // distance in km
+  elevation: number; // elevation gain in meters
+  time: number; // duration in seconds
 }

@@ -2,7 +2,7 @@ import { useRef, useEffect, useMemo, useState, useCallback } from "react";
 import { Flag, Trophy, Medal, ChevronLeft, ChevronRight, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { RaceModel } from "../models/race.model";
-import type { TrainingCycleModel } from "../models/training-cycle.model";
+import type { TrainingCycleModel, WeeklyStats } from "../models/training-cycle.model";
 import type { ComputedPhaseModel } from "../models/phase.model";
 import type { PhaseType } from "@/lib/types/type";
 import { ButtonGroup } from "@/lib/ui/button-group";
@@ -23,6 +23,8 @@ interface TimelineCanvasProps {
   onCreateRace: (data: CreateRaceParams) => void;
   onCreateTrainingCycle: (data: CreateTrainingCycleParams) => void;
   today: Date;
+  currentYear: number;
+  weeklyStats: WeeklyStats[];
 }
 
 type ZoomMode = "3m" | "6m" | "9m";
@@ -137,7 +139,8 @@ export default function TimelineCanvas({
   raceLoading,
   trainingCycleLoading,
   onCreateTrainingCycle,
-}: TimelineCanvasProps & { currentYear: number }) {
+  weeklyStats,
+}: TimelineCanvasProps) {
   const [openRaceDetails, setOpenRaceDetails] = useState(false);
   const [openCreateRace, setOpenCreateRace] = useState(false);
   const [openCreateTrainingCycle, setOpenCreateTrainingCycle] = useState(false);
@@ -439,13 +442,13 @@ export default function TimelineCanvas({
                 ))}
               </div>
               {/* Volume Chart */}
-              <div className="absolute inset-0 py-1 px-4">
-                <VolumeChart width={totalWidth - 40} height={CHART_TRACK_HEIGHT} selection={chartSelection} />
+              <div className="absolute inset-0 pb-5">
+                <VolumeChart width={totalWidth} height={CHART_TRACK_HEIGHT} selection={chartSelection} data={weeklyStats} weekWidth={weekWidth} />
               </div>
             </div>
 
             {/* Today Line */}
-            <div className="absolute top-2 bottom-0 z-30 w-0.5 bg-blue-500" style={{ left: todayOffset }}>
+            <div className="absolute top-5 bottom-0 z-30 w-0.5 bg-blue-500" style={{ left: todayOffset }}>
               <div className="absolute top-0 left-1/2 -translate-x-1/2 rounded bg-blue-500 px-2 py-1 text-[10px] font-bold text-white">TODAY</div>
             </div>
           </div>

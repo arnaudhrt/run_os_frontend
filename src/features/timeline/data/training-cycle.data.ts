@@ -1,4 +1,4 @@
-import type { CreateTrainingCycleModel, TrainingCycleModel } from "../models/training-cycle.model";
+import type { CreateTrainingCycleModel, TrainingCycleModel, WeeklyStats } from "../models/training-cycle.model";
 
 export async function getTrainingCycles({ token, year }: { token: string; year: number }): Promise<TrainingCycleModel[]> {
   const url = new URL(`${import.meta.env.VITE_API_URL}/v1/training-cycles`);
@@ -15,6 +15,26 @@ export async function getTrainingCycles({ token, year }: { token: string; year: 
   if (!response.ok) {
     console.error(response);
     throw new Error("Error fetching training cycles, check logs for more details");
+  }
+  const responseData = await response.json();
+
+  return responseData.data;
+}
+
+export async function getWeeklyStats({ token, year }: { token: string; year: number }): Promise<WeeklyStats[]> {
+  const url = new URL(`${import.meta.env.VITE_API_URL}/v1/activities/weekly-stats/${year}`);
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    console.error(response);
+    throw new Error("Error fetching weekly stats, check logs for more details");
   }
   const responseData = await response.json();
 

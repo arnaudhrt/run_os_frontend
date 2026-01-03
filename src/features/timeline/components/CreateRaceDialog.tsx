@@ -21,6 +21,11 @@ interface CreateRaceData {
   isCompleted: boolean;
   distance?: number;
   elevation?: number;
+  resultTimeSeconds?: number;
+  resultPlaceOverall?: number;
+  resultPlaceGender?: number;
+  resultPlaceCategory?: number;
+  categoryName?: string;
   onClose: () => void;
 }
 
@@ -30,7 +35,17 @@ const priorityOptions = [
   { value: 3, label: "Training", description: "Part of your preparation" },
 ] as const;
 
-const TOTAL_STEPS = 5;
+function parseTimeToSeconds(time: string): number | undefined {
+  if (!time) return undefined;
+  const parts = time.split(":").map(Number);
+  if (parts.length === 3) {
+    return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  }
+  if (parts.length === 2) {
+    return parts[0] * 60 + parts[1];
+  }
+  return undefined;
+}
 
 function formatRaceType(type: string): string {
   return type
@@ -49,18 +64,30 @@ export function CreateRaceDialog({ open, onOpenChange, onSubmit, loading }: Crea
     priority,
     distance,
     elevation,
+    resultTime,
+    resultPlaceOverall,
+    resultPlaceGender,
+    resultPlaceCategory,
+    categoryName,
     setName,
     setRaceDate,
     setRaceType,
     setPriority,
     setDistance,
     setElevation,
+    setResultTime,
+    setResultPlaceOverall,
+    setResultPlaceGender,
+    setResultPlaceCategory,
+    setCategoryName,
     goNext,
     goBack,
     reset,
   } = useCreateRaceStore();
 
   const isTrailRace = raceType === "trail" || raceType === "ultra_trail";
+  const isPastRace = raceDate && new Date(raceDate) < new Date(new Date().toDateString());
+  const totalSteps = isPastRace ? 6 : 5;
 
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) reset();
@@ -73,9 +100,14 @@ export function CreateRaceDialog({ open, onOpenChange, onSubmit, loading }: Crea
       raceDate: new Date(raceDate),
       raceType,
       priority,
-      isCompleted: false,
+      isCompleted: !!isPastRace,
       ...(distance && { distance: parseFloat(distance) * 1000 }),
       ...(elevation && isTrailRace && { elevation: parseFloat(elevation) }),
+      ...(isPastRace && resultTime && { resultTimeSeconds: parseTimeToSeconds(resultTime) }),
+      ...(isPastRace && resultPlaceOverall && { resultPlaceOverall: parseInt(resultPlaceOverall) }),
+      ...(isPastRace && resultPlaceGender && { resultPlaceGender: parseInt(resultPlaceGender) }),
+      ...(isPastRace && resultPlaceCategory && { resultPlaceCategory: parseInt(resultPlaceCategory) }),
+      ...(isPastRace && categoryName && { categoryName }),
       onClose: () => {
         reset();
         onOpenChange(false);
@@ -84,7 +116,7 @@ export function CreateRaceDialog({ open, onOpenChange, onSubmit, loading }: Crea
   };
 
   const handleNext = () => {
-    if (step < TOTAL_STEPS - 1) {
+    if (step < totalSteps - 1) {
       goNext();
     } else {
       handleSubmit();
@@ -101,6 +133,7 @@ export function CreateRaceDialog({ open, onOpenChange, onSubmit, loading }: Crea
         return raceType !== undefined;
       case 3:
       case 4:
+      case 5:
         return true;
       default:
         return false;
@@ -119,13 +152,13 @@ export function CreateRaceDialog({ open, onOpenChange, onSubmit, loading }: Crea
       <DialogContent className="max-w-md! p-0! overflow-hidden">
         {/* Progress bar */}
         <div className="h-1 bg-muted">
-          <div className="h-full bg-primary transition-all duration-300 ease-out" style={{ width: `${((step + 1) / TOTAL_STEPS) * 100}%` }} />
+          <div className="h-full bg-primary transition-all duration-300 ease-out" style={{ width: `${((step + 1) / totalSteps) * 100}%` }} />
         </div>
 
         <div className="p-6 min-h-[280px] flex flex-col">
           {/* Step indicator */}
           <div className="text-xs text-muted-foreground mb-6">
-            Step {step + 1} of {TOTAL_STEPS}
+            Step {step + 1} of {totalSteps}
           </div>
 
           {/* Content area with transitions */}
@@ -246,6 +279,62 @@ export function CreateRaceDialog({ open, onOpenChange, onSubmit, loading }: Crea
                   </div>
                 </div>
               )}
+
+              {/* Step 5: Results (only for past races) */}
+              {step === 5 && isPastRace && (
+                <div className="space-y-4">
+                  <h2 className="text-xl font-medium">Race results</h2>
+                  <p className="text-sm text-muted-foreground -mt-2">Optional - you can skip this</p>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <Input
+                        type="text"
+                        placeholder="Finish time (HH:MM:SS)"
+                        value={resultTime}
+                        onChange={(e) => setResultTime(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        className="h-12"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        placeholder="Overall position"
+                        value={resultPlaceOverall}
+                        onChange={(e) => setResultPlaceOverall(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        className="h-12 flex-1"
+                      />
+                      <Input
+                        type="number"
+                        placeholder="Gender position"
+                        value={resultPlaceGender}
+                        onChange={(e) => setResultPlaceGender(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        className="h-12 flex-1"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="text"
+                        placeholder="Category name (e.g 18-29)"
+                        value={categoryName}
+                        onChange={(e) => setCategoryName(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        className="h-12 flex-1"
+                      />
+                      <Input
+                        type="number"
+                        placeholder="Category position"
+                        value={resultPlaceCategory}
+                        onChange={(e) => setResultPlaceCategory(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        className="h-12 flex-1"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -257,7 +346,7 @@ export function CreateRaceDialog({ open, onOpenChange, onSubmit, loading }: Crea
             </Button>
 
             <Button onClick={handleNext} disabled={!canProceed() || loading} className="gap-1">
-              {step === TOTAL_STEPS - 1 ? (
+              {step === totalSteps - 1 ? (
                 <>
                   Create Race
                   {loading ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}

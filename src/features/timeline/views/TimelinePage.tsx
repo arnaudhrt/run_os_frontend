@@ -8,7 +8,7 @@ export default function HorizonPage() {
   const today = useMemo(() => new Date(), []);
   const currentYear = today.getFullYear();
   const { races, handleCreateRace, loading: raceLoading } = useRaceController();
-  const { handleCreateTrainingCycle, loading: trainingCycleLoading, trainingCycleList } = useTrainingCycleController(currentYear);
+  const { handleCreateTrainingCycle, loading: trainingCycleLoading, trainingCycleList, weeklyStats } = useTrainingCycleController(currentYear);
 
   return (
     <section className="p-8">
@@ -23,6 +23,7 @@ export default function HorizonPage() {
           raceLoading={raceLoading}
           trainingCycleLoading={trainingCycleLoading}
           currentYear={currentYear}
+          weeklyStats={weeklyStats}
         />
       </div>
     </section>

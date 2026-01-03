@@ -118,7 +118,7 @@ export const useRaceController = () => {
       const body = {
         name,
         race_date: data.raceDate.toDateString(),
-        distance_meters: data.distance,
+        distance_meters: Math.round(data.distance),
         elevation_gain_meters: data.elevation,
         target_time_seconds: data.targetTime,
         location: data.location,
