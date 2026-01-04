@@ -28,16 +28,18 @@ export default function Ledger() {
         />
       </header>
       <TableFilters garminSync={handleSyncGarmin} loading={loading} createActivity={handleCreateActivity} />
-      {structuredActivitiesLog.years.map((year) => (
-        <YearSection
-          key={year.year}
-          yearEntry={year}
-          handleUpdateActivity={handleUpdateActivity}
-          loading={loading}
-          handleDeleteActivity={handleDeleteActivity}
-          validationErrors={validationsErrors}
-        />
-      ))}
+      <div className="space-y-4">
+        {structuredActivitiesLog.years.map((year) => (
+          <YearSection
+            key={year.year}
+            yearEntry={year}
+            handleUpdateActivity={handleUpdateActivity}
+            loading={loading}
+            handleDeleteActivity={handleDeleteActivity}
+            validationErrors={validationsErrors}
+          />
+        ))}
+      </div>
     </div>
   );
 }

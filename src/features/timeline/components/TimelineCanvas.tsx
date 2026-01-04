@@ -3,8 +3,6 @@ import { Flag, Trophy, Medal, ChevronLeft, ChevronRight, Target } from "lucide-r
 import { cn } from "@/lib/utils";
 import type { RaceModel } from "../models/race.model";
 import type { TrainingCycleModel, WeeklyStats } from "../models/training-cycle.model";
-import type { ComputedPhaseModel } from "../models/phase.model";
-import type { PhaseType } from "@/lib/types/type";
 import { ButtonGroup } from "@/lib/ui/button-group";
 import { Button } from "@/lib/ui/button";
 import { NativeSelect, NativeSelectOption } from "@/lib/ui/native-select";
@@ -14,6 +12,20 @@ import { CreateRaceDialog } from "./CreateRaceDialog";
 import { CreateTrainingCycleDialog } from "./CreateTrainingCycleDialog";
 import type { CreateRaceParams, RaceLoadingState, UpdateRaceParams } from "../controllers/race.controller";
 import type { CreateTrainingCycleParams, TrainingCycleLoadingState } from "../controllers/training-cycle.controller";
+import { computePhasesFromCycles, generateYearOptions, getISOWeek, getMonthName, getWeekStart } from "../utils/timeline.utils";
+import {
+  CHART_TRACK_HEIGHT,
+  HEADER_HEIGHT,
+  MS_PER_WEEK,
+  PHASE_TRACK_HEIGHT,
+  phaseColors,
+  RACE_TRACK_HEIGHT,
+  TOTAL_WEEKS,
+  ZOOM_CONFIG,
+  ZOOM_MODES,
+  type ZoomMode,
+} from "../utils/timeline.const";
+import { addWeeks } from "date-fns";
 
 interface TimelineCanvasProps {
   races: RaceModel[];
@@ -28,107 +40,12 @@ interface TimelineCanvasProps {
   weeklyStats: WeeklyStats[];
 }
 
-type ZoomMode = "3m" | "6m" | "9m";
-
 interface WeekData {
   date: Date;
   weekNum: number;
   month: string;
   year: number;
   isFirstOfMonth: boolean;
-}
-
-const HEADER_HEIGHT = 64;
-const RACE_TRACK_HEIGHT = 80;
-const PHASE_TRACK_HEIGHT = 60;
-const CHART_TRACK_HEIGHT = 150;
-const TOTAL_WEEKS = 104; // 2 years
-const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
-
-const ZOOM_CONFIG: Record<ZoomMode, { visibleWeeks: number; label: string }> = {
-  "3m": { visibleWeeks: 13, label: "3 Months" },
-  "6m": { visibleWeeks: 26, label: "6 Months" },
-  "9m": { visibleWeeks: 39, label: "9 Months" },
-};
-
-const ZOOM_MODES: ZoomMode[] = ["3m", "6m", "9m"];
-
-const phaseColors: Record<PhaseType, { bg: string; border: string; text: string }> = {
-  base: { bg: "bg-blue-50", border: "border-blue-500", text: "text-blue-900" },
-  build: { bg: "bg-amber-50", border: "border-amber-500", text: "text-amber-900" },
-  peak: { bg: "bg-purple-50", border: "border-purple-500", text: "text-purple-900" },
-  taper: { bg: "bg-emerald-50", border: "border-emerald-500", text: "text-emerald-900" },
-  recovery: { bg: "bg-zinc-50", border: "border-zinc-500", text: "text-zinc-900" },
-  off: { bg: "bg-zinc-50", border: "border-zinc-500", text: "text-zinc-900" },
-};
-
-const priorityIcons: Record<1 | 2 | 3, typeof Trophy> = {
-  1: Trophy,
-  2: Medal,
-  3: Flag,
-};
-
-function getISOWeek(date: Date): number {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  const dayNum = d.getUTCDay() || 7;
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
-}
-
-function getWeekStart(date: Date): Date {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-  d.setDate(diff);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-
-function addWeeks(date: Date, weeks: number): Date {
-  const d = new Date(date);
-  d.setDate(d.getDate() + weeks * 7);
-  return d;
-}
-
-function getMonthName(date: Date): string {
-  return date.toLocaleDateString("en-US", { month: "short" });
-}
-
-function generateYearOptions(currentYear: number): number[] {
-  const years: number[] = [];
-  for (let y = currentYear - 2; y <= currentYear + 2; y++) {
-    years.push(y);
-  }
-  return years;
-}
-
-/** Compute phases with start_date and end_date from training cycles */
-function computePhasesFromCycles(trainingCycles: TrainingCycleModel[]): ComputedPhaseModel[] {
-  const computedPhases: ComputedPhaseModel[] = [];
-
-  for (const cycle of trainingCycles) {
-    const cycleStartDate = new Date(cycle.start_date);
-    // Sort phases by order to ensure correct sequence
-    const sortedPhases = [...cycle.phases].sort((a, b) => a.order - b.order);
-
-    let currentDate = cycleStartDate;
-
-    for (const phase of sortedPhases) {
-      const phaseStartDate = new Date(currentDate);
-      const phaseEndDate = addWeeks(phaseStartDate, phase.duration_weeks);
-
-      computedPhases.push({
-        ...phase,
-        start_date: phaseStartDate.toISOString(),
-        end_date: phaseEndDate.toISOString(),
-      });
-
-      currentDate = phaseEndDate;
-    }
-  }
-
-  return computedPhases;
 }
 
 export default function TimelineCanvas({
@@ -150,10 +67,7 @@ export default function TimelineCanvas({
   const [chartSelection, setChartSelection] = useState("volume");
 
   // Derive selectedRace from races array - always up to date
-  const selectedRace = useMemo(
-    () => (selectedRaceId ? races.find((r) => r.id === selectedRaceId) ?? null : null),
-    [races, selectedRaceId]
-  );
+  const selectedRace = useMemo(() => (selectedRaceId ? races.find((r) => r.id === selectedRaceId) ?? null : null), [races, selectedRaceId]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -250,6 +164,12 @@ export default function TimelineCanvas({
     setChartSelection(e.target.value);
   };
 
+  const priorityIcons: Record<1 | 2 | 3, typeof Trophy> = {
+    1: Trophy,
+    2: Medal,
+    3: Flag,
+  };
+
   return (
     <div className="space-y-4">
       {/* Controls */}
@@ -271,17 +191,6 @@ export default function TimelineCanvas({
             <NativeSelectOption value="time">Time</NativeSelectOption>
             <NativeSelectOption value="elevation">Elevation</NativeSelectOption>
           </NativeSelect>
-        </div>
-
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setOpenCreateTrainingCycle(true)}>
-            <Target className="size-4" />
-            Create Training Cycle
-          </Button>
-          <Button onClick={() => setOpenCreateRace(true)}>
-            <Flag className="size-4" />
-            Create Race
-          </Button>
           <div className="flex items-center -ml-2">
             <Button onClick={handlePrevYear} variant="ghost" size="sm" disabled={selectedYear <= currentYear - 2}>
               <ChevronLeft className="h-4 w-4" />
@@ -297,6 +206,17 @@ export default function TimelineCanvas({
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
+        </div>
+
+        <div className="flex gap-2">
+          <Button onClick={() => setOpenCreateRace(true)}>
+            <Flag className="size-4" />
+            Create Race
+          </Button>
+          <Button variant="outline" onClick={() => setOpenCreateTrainingCycle(true)}>
+            <Target className="size-4" />
+            Create Training Cycle
+          </Button>
         </div>
       </div>
 

@@ -6,9 +6,11 @@ import { Loader2, ArrowRight, ArrowLeft, Check, X, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCreateTrainingCycleStore } from "../stores/create-training-cycle.store";
 import type { RaceModel } from "../models/race.model";
-import { type PhaseType, phaseTypes } from "@/lib/types/type";
+import { phaseTypes } from "@/lib/types/type";
 import type { CreateTrainingCycleParams } from "../controllers/training-cycle.controller";
 import { format } from "date-fns";
+import { formatDate, getDuration } from "../utils/training-cycle.utils";
+import { phaseColors, TOTAL_STEPS } from "../utils/training-cycle.const";
 
 interface CreateTrainingCycleDialogProps {
   open: boolean;
@@ -16,50 +18,6 @@ interface CreateTrainingCycleDialogProps {
   onSubmit: (data: CreateTrainingCycleParams) => void;
   loading?: boolean;
   races: RaceModel[];
-}
-
-const TOTAL_STEPS = 4;
-
-const phaseColors: Record<PhaseType, string> = {
-  base: "bg-blue-100 border-blue-500 text-blue-900",
-  build: "bg-amber-100 border-amber-500 text-amber-900",
-  peak: "bg-purple-100 border-purple-500 text-purple-900",
-  taper: "bg-emerald-100 border-emerald-500 text-emerald-900",
-  recovery: "bg-zinc-100 border-zinc-500 text-zinc-900",
-  off: "bg-zinc-100 border-zinc-500 text-zinc-900",
-};
-
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function getWeekStart(date: Date): Date {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Monday
-  d.setDate(diff);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-
-function getDuration(startDate: Date, endDate: Date): { weeks: number; months: number } {
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-
-  // Get the Monday of the start week and the Monday of the end week
-  const startWeekMonday = getWeekStart(start);
-  const endWeekMonday = getWeekStart(end);
-
-  // Calculate full weeks between the two Mondays, +1 to include both weeks
-  const diffMs = endWeekMonday.getTime() - startWeekMonday.getTime();
-  const weeks = Math.round(diffMs / (7 * 24 * 60 * 60 * 1000)) + 1;
-
-  const months = Math.round((weeks / 52) * 12 * 10) / 10;
-  return { weeks, months };
 }
 
 export function CreateTrainingCycleDialog({ open, onOpenChange, onSubmit, loading, races }: CreateTrainingCycleDialogProps) {

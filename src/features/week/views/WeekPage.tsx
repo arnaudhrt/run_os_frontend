@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, Download, RefreshCw } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Plus, RefreshCw } from "lucide-react";
 import { Button } from "@/lib/ui/button";
 import { Badge } from "@/lib/ui/badge";
 import { Progress } from "@/lib/ui/progress";
 import { cn } from "@/lib/utils";
+import { CreatePlannedWorkoutDialog } from "../components/CreatePlannedWorkoutDialog";
 
 // Static mock data for UI preview
 const mockPhaseContext = {
@@ -52,6 +53,7 @@ function getCompletionPercent(planned: number, actual: number): number {
 
 export default function WeekPage() {
   const [weekOffset, setWeekOffset] = useState(0);
+  const [openCreateWorkoutDialog, setOpenCreateWorkoutDialog] = useState(false);
 
   const handlePrevWeek = () => setWeekOffset((prev) => prev - 1);
   const handleNextWeek = () => setWeekOffset((prev) => prev + 1);
@@ -111,6 +113,10 @@ export default function WeekPage() {
           <Button variant="outline" size="sm">
             <Download className="size-4 mr-1.5" />
             Export
+          </Button>
+          <Button size="sm" onClick={() => setOpenCreateWorkoutDialog(true)}>
+            <Plus className="size-4 mr-1.5" />
+            Create workout
           </Button>
         </div>
       </div>
@@ -182,6 +188,12 @@ export default function WeekPage() {
           </div>
         ))}
       </div>
+      <CreatePlannedWorkoutDialog
+        open={openCreateWorkoutDialog}
+        onOpenChange={() => setOpenCreateWorkoutDialog(false)}
+        onSubmit={() => {}}
+        weekStartDate={new Date()}
+      />
     </div>
   );
 }

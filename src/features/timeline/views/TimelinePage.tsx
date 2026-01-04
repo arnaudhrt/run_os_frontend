@@ -12,7 +12,7 @@ export default function HorizonPage() {
 
   return (
     <section className="p-8">
-      <TimelineHeader />
+      <TimelineHeader trainingCycles={trainingCycleList} />
       <div className="mt-12">
         <TimelineCanvas
           races={races || []}
