@@ -4,7 +4,7 @@ export interface PlannedWorkoutModel {
   id: string;
   user_id: string;
   planned_date: string;
-  time_slot: "am" | "pm" | "single";
+  time_slot: TimeSlot;
   activity_type: ActivityType;
   workout_type?: WorkoutType;
   target_distance_meters?: number | null;
@@ -15,10 +15,7 @@ export interface PlannedWorkoutModel {
   updated_at: string;
 }
 
-export interface PlannedWorkoutDateRangeParams {
-  start: string;
-  end: string;
-}
+export type TimeSlot = "am" | "pm" | "single";
 
 export type CreatePlannedWorkoutModel = Omit<PlannedWorkoutModel, "id" | "user_id" | "created_at" | "updated_at">;
 export type CreatePlannedWorkoutWithUserModel = Omit<PlannedWorkoutModel, "id" | "created_at" | "updated_at">;

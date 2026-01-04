@@ -100,3 +100,41 @@ export function getWeekDays(weekStartDate: Date): WeekDay[] {
 
   return days;
 }
+
+export function getCompletionPercent(planned: number, actual: number): number {
+  if (planned === 0) return 0;
+  return Math.round((actual / planned) * 100);
+}
+
+/**
+ * Get the start and end dates of a week based on an offset from the current week
+ * @param offset - Number of weeks from current week (0 = current, -1 = last, 1 = next)
+ * @returns Object with start (Monday) and end (Sunday) dates
+ */
+export function getWeekDateRange(offset: number): { start: Date; end: Date; startStr: string; endStr: string } {
+  const today = new Date();
+  const dayOfWeek = today.getDay();
+  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+
+  const weekStart = new Date(today);
+  weekStart.setDate(today.getDate() + mondayOffset + offset * 7);
+  weekStart.setHours(0, 0, 0, 0);
+
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekStart.getDate() + 6);
+  weekEnd.setHours(23, 59, 59, 999);
+
+  const formatDate = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  return {
+    start: weekStart,
+    end: weekEnd,
+    startStr: formatDate(weekStart),
+    endStr: formatDate(weekEnd),
+  };
+}
