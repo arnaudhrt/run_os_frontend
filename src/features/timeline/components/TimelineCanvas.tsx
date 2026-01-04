@@ -12,7 +12,7 @@ import { RaceDetailsDialog } from "./RaceDetailsDialog";
 import { VolumeChart } from "./VolumeChart";
 import { CreateRaceDialog } from "./CreateRaceDialog";
 import { CreateTrainingCycleDialog } from "./CreateTrainingCycleDialog";
-import type { CreateRaceParams, RaceLoadingState } from "../controllers/race.controller";
+import type { CreateRaceParams, RaceLoadingState, UpdateRaceParams } from "../controllers/race.controller";
 import type { CreateTrainingCycleParams, TrainingCycleLoadingState } from "../controllers/training-cycle.controller";
 
 interface TimelineCanvasProps {
@@ -21,6 +21,7 @@ interface TimelineCanvasProps {
   raceLoading: RaceLoadingState;
   trainingCycleLoading: TrainingCycleLoadingState;
   onCreateRace: (data: CreateRaceParams) => void;
+  onUpdateRace: (data: UpdateRaceParams) => void;
   onCreateTrainingCycle: (data: CreateTrainingCycleParams) => void;
   today: Date;
   currentYear: number;
@@ -136,6 +137,7 @@ export default function TimelineCanvas({
   today,
   currentYear,
   onCreateRace,
+  onUpdateRace,
   raceLoading,
   trainingCycleLoading,
   onCreateTrainingCycle,
@@ -144,8 +146,14 @@ export default function TimelineCanvas({
   const [openRaceDetails, setOpenRaceDetails] = useState(false);
   const [openCreateRace, setOpenCreateRace] = useState(false);
   const [openCreateTrainingCycle, setOpenCreateTrainingCycle] = useState(false);
-  const [selectedRace, setSelectedRace] = useState<RaceModel | null>(null);
+  const [selectedRaceId, setSelectedRaceId] = useState<string | null>(null);
   const [chartSelection, setChartSelection] = useState("volume");
+
+  // Derive selectedRace from races array - always up to date
+  const selectedRace = useMemo(
+    () => (selectedRaceId ? races.find((r) => r.id === selectedRaceId) ?? null : null),
+    [races, selectedRaceId]
+  );
   const scrollRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -364,7 +372,7 @@ export default function TimelineCanvas({
                       className={cn("absolute top-0 -translate-x-1/2 flex flex-col items-center gap-0.5 cursor-pointer", isPast && "opacity-50")}
                       style={{ left: position + 1 }}
                       onClick={() => {
-                        setSelectedRace(race);
+                        setSelectedRaceId(race.id);
                         setOpenRaceDetails(true);
                       }}
                     >
@@ -454,7 +462,13 @@ export default function TimelineCanvas({
           </div>
         </div>
       </div>
-      <RaceDetailsDialog open={openRaceDetails} onOpenChange={setOpenRaceDetails} race={selectedRace} />
+      <RaceDetailsDialog
+        open={openRaceDetails}
+        onOpenChange={setOpenRaceDetails}
+        onUpdateRace={onUpdateRace}
+        loading={raceLoading.update}
+        race={selectedRace}
+      />
       {onCreateRace && (
         <CreateRaceDialog open={openCreateRace} onOpenChange={setOpenCreateRace} onSubmit={onCreateRace} loading={raceLoading.create} />
       )}

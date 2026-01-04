@@ -2,56 +2,18 @@ import { Dialog, DialogContent } from "@/lib/ui/dialog";
 import { Button } from "@/lib/ui/button";
 import { Input } from "@/lib/ui/input";
 import { Loader2, ArrowRight, ArrowLeft, Check } from "lucide-react";
-import { raceTypes, type RaceType } from "@/lib/types/type";
+import { raceTypes } from "@/lib/types/type";
 import { cn } from "@/lib/utils";
 import { useCreateRaceStore } from "../stores/create-race.store";
+import type { CreateRaceParams } from "../controllers/race.controller";
+import { formatRaceType, parseTimeToSeconds } from "../utils/race.utils";
+import { priorityOptions } from "../utils/race.const";
 
 interface CreateRaceDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: CreateRaceData) => void;
+  onSubmit: (data: CreateRaceParams) => void;
   loading?: boolean;
-}
-
-interface CreateRaceData {
-  name: string;
-  raceDate: Date;
-  raceType: RaceType;
-  priority: 1 | 2 | 3;
-  isCompleted: boolean;
-  distance?: number;
-  elevation?: number;
-  resultTimeSeconds?: number;
-  resultPlaceOverall?: number;
-  resultPlaceGender?: number;
-  resultPlaceCategory?: number;
-  categoryName?: string;
-  onClose: () => void;
-}
-
-const priorityOptions = [
-  { value: 1, label: "Primary", description: "Your main goal race" },
-  { value: 2, label: "Secondary", description: "Important but not the focus" },
-  { value: 3, label: "Training", description: "Part of your preparation" },
-] as const;
-
-function parseTimeToSeconds(time: string): number | undefined {
-  if (!time) return undefined;
-  const parts = time.split(":").map(Number);
-  if (parts.length === 3) {
-    return parts[0] * 3600 + parts[1] * 60 + parts[2];
-  }
-  if (parts.length === 2) {
-    return parts[0] * 60 + parts[1];
-  }
-  return undefined;
-}
-
-function formatRaceType(type: string): string {
-  return type
-    .split("_")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
 }
 
 export function CreateRaceDialog({ open, onOpenChange, onSubmit, loading }: CreateRaceDialogProps) {
@@ -101,7 +63,7 @@ export function CreateRaceDialog({ open, onOpenChange, onSubmit, loading }: Crea
       raceType,
       priority,
       isCompleted: !!isPastRace,
-      ...(distance && { distance: parseFloat(distance) * 1000 }),
+      distance: parseFloat(distance) * 1000,
       ...(elevation && isTrailRace && { elevation: parseFloat(elevation) }),
       ...(isPastRace && resultTime && { resultTimeSeconds: parseTimeToSeconds(resultTime) }),
       ...(isPastRace && resultPlaceOverall && { resultPlaceOverall: parseInt(resultPlaceOverall) }),
@@ -124,6 +86,7 @@ export function CreateRaceDialog({ open, onOpenChange, onSubmit, loading }: Crea
   };
 
   const canProceed = () => {
+    const distanceValue = parseFloat(distance) * 1000;
     switch (step) {
       case 0:
         return name.trim().length > 0;
@@ -133,6 +96,7 @@ export function CreateRaceDialog({ open, onOpenChange, onSubmit, loading }: Crea
         return raceType !== undefined;
       case 3:
       case 4:
+        return distanceValue > 0;
       case 5:
         return true;
       default:

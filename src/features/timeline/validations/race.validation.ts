@@ -1,5 +1,6 @@
-import { type RaceType, raceTypes } from "@/lib/types/type";
+import { raceTypes } from "@/lib/types/type";
 import { z } from "zod";
+import type { CreateRaceParams, UpdateRaceParams } from "../controllers/race.controller";
 
 const createRaceSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -12,6 +13,11 @@ const createRaceSchema = z.object({
   targetTime: z.number().optional(),
   location: z.string().optional(),
   notes: z.string().optional(),
+  resultTime: z.number().optional(),
+  resultPlaceOverall: z.number().positive().int().optional(),
+  resultPlaceGender: z.number().positive().int().optional(),
+  resultPlaceCategory: z.number().positive().int().optional(),
+  categoryName: z.string().optional(),
 });
 
 type ResultData = z.infer<typeof createRaceSchema>;
@@ -27,18 +33,12 @@ export const validateCreateRaceFields = ({
   targetTime,
   location,
   notes,
-}: {
-  name: string;
-  raceDate: Date;
-  raceType: RaceType;
-  priority: 1 | 2 | 3;
-  isCompleted: boolean;
-  elevation?: number;
-  distance?: number;
-  targetTime?: number;
-  location?: string;
-  notes?: string;
-}): { success: boolean; errors: Record<string, string> | null; data: ResultData | null } => {
+  resultTime,
+  resultPlaceOverall,
+  resultPlaceGender,
+  resultPlaceCategory,
+  categoryName,
+}: Omit<CreateRaceParams, "onClose">): { success: boolean; errors: Record<string, string> | null; data: ResultData | null } => {
   const result = createRaceSchema.safeParse({
     name,
     raceDate,
@@ -50,6 +50,11 @@ export const validateCreateRaceFields = ({
     targetTime,
     location,
     notes,
+    resultTime,
+    resultPlaceOverall,
+    resultPlaceGender,
+    resultPlaceCategory,
+    categoryName,
   });
 
   if (!result.success) {
@@ -78,7 +83,10 @@ const updateRaceSchema = z.object({
   location: z.string().optional(),
   notes: z.string().optional(),
   resultTime: z.number().optional(),
-  resultPlace: z.string().optional(),
+  resultPlaceOverall: z.number().positive().int().optional(),
+  resultPlaceGender: z.number().positive().int().optional(),
+  resultPlaceCategory: z.number().positive().int().optional(),
+  categoryName: z.string().optional(),
 });
 
 type UpdateResultData = z.infer<typeof updateRaceSchema>;
@@ -96,22 +104,11 @@ export const validateUpdateRaceFields = ({
   location,
   notes,
   resultTime,
-  resultPlace,
-}: {
-  id: string;
-  name?: string;
-  raceDate?: string;
-  raceType?: RaceType;
-  priority?: 1 | 2 | 3;
-  isCompleted?: boolean;
-  elevation?: number;
-  distance?: number;
-  targetTime?: number;
-  location?: string;
-  notes?: string;
-  resultTime?: number;
-  resultPlace?: string;
-}): { success: boolean; errors: Record<string, string> | null; data: UpdateResultData | null } => {
+  resultPlaceOverall,
+  resultPlaceGender,
+  resultPlaceCategory,
+  categoryName,
+}: Omit<UpdateRaceParams, "onClose">): { success: boolean; errors: Record<string, string> | null; data: UpdateResultData | null } => {
   const result = updateRaceSchema.safeParse({
     id,
     name,
@@ -125,7 +122,10 @@ export const validateUpdateRaceFields = ({
     location,
     notes,
     resultTime,
-    resultPlace,
+    resultPlaceOverall,
+    resultPlaceGender,
+    resultPlaceCategory,
+    categoryName,
   });
 
   if (!result.success) {

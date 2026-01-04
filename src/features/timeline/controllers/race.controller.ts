@@ -26,6 +26,31 @@ export interface CreateRaceParams {
   targetTime?: number;
   location?: string;
   notes?: string;
+  resultTime?: number;
+  resultPlaceOverall?: number;
+  resultPlaceGender?: number;
+  resultPlaceCategory?: number;
+  categoryName?: string;
+  onClose: () => void;
+}
+
+export interface UpdateRaceParams {
+  id: string;
+  name?: string;
+  raceDate?: string;
+  raceType?: RaceType;
+  priority?: 1 | 2 | 3;
+  isCompleted?: boolean;
+  elevation?: number;
+  distance?: number;
+  targetTime?: number;
+  location?: string;
+  notes?: string;
+  resultTime?: number;
+  resultPlaceOverall?: number;
+  resultPlaceGender?: number;
+  resultPlaceCategory?: number;
+  categoryName?: string;
   onClose: () => void;
 }
 
@@ -89,6 +114,11 @@ export const useRaceController = () => {
     distance,
     targetTime,
     location,
+    resultTime,
+    resultPlaceOverall,
+    resultPlaceGender,
+    resultPlaceCategory,
+    categoryName,
     notes,
     onClose,
   }: CreateRaceParams): Promise<void> => {
@@ -106,6 +136,11 @@ export const useRaceController = () => {
       distance,
       targetTime,
       location,
+      resultTime,
+      resultPlaceOverall,
+      resultPlaceGender,
+      resultPlaceCategory,
+      categoryName,
       notes,
     });
     if (!success || !data) {
@@ -119,13 +154,18 @@ export const useRaceController = () => {
         name,
         race_date: data.raceDate.toDateString(),
         distance_meters: Math.round(data.distance),
-        elevation_gain_meters: data.elevation,
-        target_time_seconds: data.targetTime,
-        location: data.location,
-        notes: data.notes,
         race_type: data.raceType,
         priority: data.priority,
         is_completed: data.isCompleted,
+        ...(elevation ? { elevation_gain_meters: data.elevation } : {}),
+        ...(targetTime ? { target_time_seconds: data.targetTime } : {}),
+        ...(location ? { location: data.location } : {}),
+        ...(notes ? { notes: data.notes } : {}),
+        ...(resultTime ? { result_time_seconds: data.resultTime } : {}),
+        ...(resultPlaceOverall ? { result_place_overall: data.resultPlaceOverall } : {}),
+        ...(resultPlaceGender ? { result_place_gender: data.resultPlaceGender } : {}),
+        ...(resultPlaceCategory ? { result_place_category: data.resultPlaceCategory } : {}),
+        ...(categoryName ? { category_name: data.categoryName } : {}),
       };
       await createRace({ body, token });
       toast.success("Race created successfully");
@@ -152,24 +192,12 @@ export const useRaceController = () => {
     location,
     notes,
     resultTime,
-    resultPlace,
+    resultPlaceOverall,
+    resultPlaceGender,
+    resultPlaceCategory,
+    categoryName,
     onClose,
-  }: {
-    id: string;
-    name: string;
-    raceDate: string;
-    raceType: RaceType;
-    priority: 1 | 2 | 3;
-    isCompleted: boolean;
-    elevation?: number;
-    distance?: number;
-    targetTime?: number;
-    location?: string;
-    notes?: string;
-    resultTime?: number;
-    resultPlace?: string;
-    onClose: () => void;
-  }): Promise<void> => {
+  }: UpdateRaceParams): Promise<void> => {
     setLoading((prev) => ({ ...prev, update: true }));
     setValidationsErrors(null);
     setApiError(null);
@@ -187,7 +215,10 @@ export const useRaceController = () => {
       location,
       notes,
       resultTime,
-      resultPlace,
+      resultPlaceOverall,
+      resultPlaceGender,
+      resultPlaceCategory,
+      categoryName,
     });
     if (!success || !data) {
       setValidationsErrors(errors);
@@ -197,18 +228,21 @@ export const useRaceController = () => {
     try {
       const token = await getFreshIdToken();
       const body = {
-        name: data.name,
-        race_date: data.raceDate,
-        distance_meters: data.distance,
-        elevation_gain_meters: data.elevation,
-        target_time_seconds: data.targetTime,
-        location: data.location,
-        notes: data.notes,
-        race_type: data.raceType,
-        priority: data.priority,
-        is_completed: data.isCompleted,
-        result_time_seconds: data.resultTime,
-        result_place: data.resultPlace,
+        ...(data.name ? { name: data.name } : {}),
+        ...(data.raceDate ? { race_date: data.raceDate } : {}),
+        ...(data.distance ? { distance_meters: data.distance } : {}),
+        ...(data.elevation ? { elevation_gain_meters: data.elevation } : {}),
+        ...(data.targetTime ? { target_time_seconds: data.targetTime } : {}),
+        ...(data.location ? { location: data.location } : {}),
+        ...(data.notes ? { notes: data.notes } : {}),
+        ...(data.raceType ? { race_type: data.raceType } : {}),
+        ...(data.priority ? { priority: data.priority } : {}),
+        ...(data.isCompleted ? { is_completed: data.isCompleted } : {}),
+        ...(data.resultTime ? { result_time_seconds: data.resultTime } : {}),
+        ...(data.resultPlaceOverall ? { result_place_overall: data.resultPlaceOverall } : {}),
+        ...(data.resultPlaceGender ? { result_place_gender: data.resultPlaceGender } : {}),
+        ...(data.resultPlaceCategory ? { result_place_category: data.resultPlaceCategory } : {}),
+        ...(data.categoryName ? { category_name: data.categoryName } : {}),
       };
       await updateRace({ id: data.id, body, token });
       toast.success("Race updated successfully");

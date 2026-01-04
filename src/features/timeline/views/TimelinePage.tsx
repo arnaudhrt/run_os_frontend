@@ -7,7 +7,7 @@ import { useTrainingCycleController } from "../controllers/training-cycle.contro
 export default function HorizonPage() {
   const today = useMemo(() => new Date(), []);
   const currentYear = today.getFullYear();
-  const { races, handleCreateRace, loading: raceLoading } = useRaceController();
+  const { races, handleCreateRace, handleUpdateRace, loading: raceLoading } = useRaceController();
   const { handleCreateTrainingCycle, loading: trainingCycleLoading, trainingCycleList, weeklyStats } = useTrainingCycleController(currentYear);
 
   return (
@@ -19,6 +19,7 @@ export default function HorizonPage() {
           trainingCycles={trainingCycleList}
           today={today}
           onCreateRace={handleCreateRace}
+          onUpdateRace={handleUpdateRace}
           onCreateTrainingCycle={handleCreateTrainingCycle}
           raceLoading={raceLoading}
           trainingCycleLoading={trainingCycleLoading}

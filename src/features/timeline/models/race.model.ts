@@ -35,4 +35,20 @@ export type CreateRaceModel = Omit<
   | "created_at"
   | "updated_at"
 >;
-export type UpdateRaceModel = Partial<Omit<RaceModel, "id" | "user_id" | "created_at" | "updated_at">>;
+export interface UpdateRaceModel {
+  name?: string;
+  race_date?: string;
+  race_type?: RaceType;
+  priority?: 1 | 2 | 3;
+  is_completed?: boolean;
+  elevation_gain_meters?: number;
+  distance_meters?: number;
+  target_time_seconds?: number;
+  location?: string;
+  notes?: string;
+  result_time_seconds?: number;
+  result_place_overall?: number;
+  result_place_gender?: number;
+  result_place_category?: number;
+  category_name?: string;
+}
