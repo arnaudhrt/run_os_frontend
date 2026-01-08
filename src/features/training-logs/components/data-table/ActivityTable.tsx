@@ -76,6 +76,9 @@ export default function ActivityTable({
             onOpenChange={setOpenActivityDialog}
             setSelectedActivity={setSelectedActivity}
             deleteActivity={handleDeleteActivity}
+            updateActivity={handleUpdateActivity}
+            loadingUpdate={loading.update}
+            loadingDelete={loading.delete}
           />
         )}
       </div>

@@ -38,6 +38,7 @@ export default function Ledger() {
             key={year.year}
             yearEntry={year}
             handleUpdateActivity={handleUpdateActivity}
+            handleCreateActivity={handleCreateActivity}
             loading={loading}
             handleDeleteActivity={handleDeleteActivity}
             validationErrors={validationsErrors}

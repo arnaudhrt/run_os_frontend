@@ -24,6 +24,11 @@ export function formatPace(paceMinPerKm: number | undefined): string {
   return `${minutes}:${seconds.toString().padStart(2, "0")} /km`;
 }
 
+export function formatAvgTemperature(temp: number | undefined): string {
+  if (!temp) return "-";
+  return `${temp} °C`;
+}
+
 export function formatElevation(meters: number | undefined): string {
   if (!meters) return "-";
   return `${meters} m`;
@@ -49,11 +54,17 @@ export function formatDate(dateString: string): string {
   });
 }
 
-export function formatWorkoutType(type: string): string {
+export function formatWorkoutType(type: string | null | undefined): string {
+  if (!type) return "";
   return type
     .split("_")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
+}
+
+export function formatHasPain(hasPain: string | null | undefined): string {
+  if (!hasPain) return "None";
+  return hasPain.charAt(0).toUpperCase() + hasPain.slice(1);
 }
 
 export function formatActivityType(type: string): string {

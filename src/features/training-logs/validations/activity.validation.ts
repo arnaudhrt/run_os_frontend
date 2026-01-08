@@ -72,9 +72,11 @@ const createActivitySchema = z.object({
   activityType: z.enum(activityTypes, {
     message: "Activity type is required",
   }),
-  workoutType: z.enum(allWorkoutTypes, {
-    message: "Workout type is required",
-  }),
+  workoutType: z
+    .enum(allWorkoutTypes, {
+      message: "Workout type is required",
+    })
+    .optional(),
   startTime: z.string().min(1, "Start time is required"),
   distanceMeters: z.number().positive("Distance must be positive").optional(),
   durationSeconds: z.number().positive("Duration must be positive").optional(),

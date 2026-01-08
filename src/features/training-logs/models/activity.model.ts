@@ -1,4 +1,4 @@
-import type { ActivityType, DataSource, RunningWorkoutType, StrengthWorkoutType } from "@/lib/types/type";
+import type { ActivityType, DataSource, WorkoutType } from "@/lib/types/type";
 
 export interface ActivityModel {
   id: string;
@@ -8,7 +8,7 @@ export interface ActivityModel {
   strava_activity_id?: number;
 
   activity_type: ActivityType;
-  workout_type?: StrengthWorkoutType | RunningWorkoutType | null;
+  workout_type?: WorkoutType;
   start_time: string;
 
   distance_meters?: number;

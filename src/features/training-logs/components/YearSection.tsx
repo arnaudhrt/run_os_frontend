@@ -2,19 +2,21 @@ import type { YearEntry } from "../models/activity.model";
 import { StatsSummary } from "./StatsBloc";
 import { Accordion } from "@/lib/ui/accordion";
 import MonthAccordion from "./MonthAccordion";
-import type { LoadingState, UpdateActivityParams, ValidationErrors } from "../controllers/activity.controller";
+import type { CreateActivityParams, LoadingState, UpdateActivityParams, ValidationErrors } from "../controllers/activity.controller";
 
 export default function YearSection({
   yearEntry,
   handleUpdateActivity,
   loading,
   handleDeleteActivity,
+  handleCreateActivity,
   validationErrors,
 }: {
   yearEntry: YearEntry;
   handleUpdateActivity: (params: UpdateActivityParams) => Promise<void>;
   loading: LoadingState;
   handleDeleteActivity: (activityId: string, onClose: () => void) => Promise<void>;
+  handleCreateActivity: (params: CreateActivityParams) => Promise<void>;
   validationErrors: ValidationErrors;
 }) {
   if (!yearEntry.months) return null;
@@ -39,8 +41,9 @@ export default function YearSection({
               key={`${yearEntry.year}-${month.month}`}
               monthEntry={month}
               handleUpdateActivity={handleUpdateActivity}
-              loading={loading}
+              handleCreateActivity={handleCreateActivity}
               handleDeleteActivity={handleDeleteActivity}
+              loading={loading}
               validationErrors={validationErrors}
             />
           ))}

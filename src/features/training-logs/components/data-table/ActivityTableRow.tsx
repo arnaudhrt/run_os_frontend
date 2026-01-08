@@ -34,7 +34,9 @@ export default function ActivityTableRow({
   return (
     <TableRow
       key={`${day.date}-${activity.id || index}`}
-      className={`font-mono text-sm hover:bg-muted/30 cursor-pointer ${
+      className={`font-mono text-sm ${
+        activity.workout_type === "race" ? " bg-yellow-50 hover:bg-yellow-100/50" : "hover:bg-muted/30"
+      } cursor-pointer ${
         index !== 0 ? "border-t-0" : "" // Remove top border for stacked activities
       }`}
       onClick={() => {
