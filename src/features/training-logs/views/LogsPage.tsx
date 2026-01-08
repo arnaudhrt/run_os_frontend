@@ -10,7 +10,6 @@ export default function Ledger() {
   if (!structuredActivitiesLog) {
     return <LoaderScreen />;
   }
-  console.log(structuredActivitiesLog);
   return (
     <div className="max-w-6xl mx-auto px-8 py-12">
       <header className="flex justify-between items-center pb-4 mb-8">

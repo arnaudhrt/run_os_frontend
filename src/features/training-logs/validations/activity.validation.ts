@@ -1,23 +1,22 @@
-import { activityTypes, workoutTypes, type ActivityType, type RPE, type WorkoutType } from "@/lib/types/type";
+import { activityTypes, allWorkoutTypes, type ValidationResponse } from "@/lib/types/type";
 import z from "zod";
 
 // UPDATE ACTIVITY VALIDATION
 const updateActivitySchema = z.object({
   id: z.string().min(1, "Activity id is required"),
   activityType: z.enum(activityTypes, { message: "Activity type is required" }).optional(),
-  workoutType: z.enum(workoutTypes, { message: "Workout type is required" }).optional(),
+  workoutType: z.enum(allWorkoutTypes, { message: "Workout type is required" }).optional(),
   distanceMeters: z.number().positive("Distance must be positive").optional(),
   durationSeconds: z.number().positive("Duration must be positive").optional(),
   elevationGainMeters: z.number().min(0, "Elevation must be non-negative").optional(),
-  elevationLossMeters: z.number().min(0, "Elevation must be non-negative").optional(),
   avgHeartRate: z.number().min(30).max(250).optional(),
   maxHeartRate: z.number().min(30).max(250).optional(),
-  avgCadence: z.number().min(0).max(300).optional(),
-  steps: z.number().min(0).optional(),
-  calories: z.number().min(0).optional(),
   avgTemperatureCelsius: z.number().min(-50).max(60).optional(),
-  rpe: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5)], { message: "RPE must be between 1 and 5" }).optional(),
+  isPr: z.boolean().optional(),
+  hasPain: z.string().optional(),
+  rpe: z.number().min(1).max(10).optional(),
   notes: z.string().optional(),
+  shoesId: z.string().optional(),
 });
 
 type UpdateResultData = z.infer<typeof updateActivitySchema>;
@@ -29,32 +28,15 @@ export const validateUpdateActivityFields = ({
   distanceMeters,
   durationSeconds,
   elevationGainMeters,
-  elevationLossMeters,
   avgHeartRate,
   maxHeartRate,
-  avgCadence,
-  steps,
-  calories,
   avgTemperatureCelsius,
+  isPr,
+  hasPain,
   rpe,
   notes,
-}: {
-  id: string;
-  activityType?: ActivityType;
-  workoutType?: WorkoutType;
-  distanceMeters?: number;
-  durationSeconds?: number;
-  elevationGainMeters?: number;
-  elevationLossMeters?: number;
-  avgHeartRate?: number;
-  maxHeartRate?: number;
-  avgCadence?: number;
-  steps?: number;
-  calories?: number;
-  avgTemperatureCelsius?: number;
-  rpe?: RPE;
-  notes?: string;
-}): { success: boolean; errors: Record<string, string> | null; data: UpdateResultData | null } => {
+  shoesId,
+}: UpdateResultData): ValidationResponse<UpdateResultData> => {
   const result = updateActivitySchema.safeParse({
     id,
     activityType,
@@ -62,15 +44,14 @@ export const validateUpdateActivityFields = ({
     distanceMeters,
     durationSeconds,
     elevationGainMeters,
-    elevationLossMeters,
     avgHeartRate,
     maxHeartRate,
-    avgCadence,
-    steps,
-    calories,
     avgTemperatureCelsius,
+    isPr,
+    hasPain,
     rpe,
     notes,
+    shoesId,
   });
 
   if (!result.success) {
@@ -91,7 +72,7 @@ const createActivitySchema = z.object({
   activityType: z.enum(activityTypes, {
     message: "Activity type is required",
   }),
-  workoutType: z.enum(workoutTypes, {
+  workoutType: z.enum(allWorkoutTypes, {
     message: "Workout type is required",
   }),
   startTime: z.string().min(1, "Start time is required"),
@@ -100,13 +81,12 @@ const createActivitySchema = z.object({
   elevationGainMeters: z.number().min(0, "Elevation must be non-negative").optional(),
   avgHeartRate: z.number().min(30).max(250).optional(),
   maxHeartRate: z.number().min(30).max(250).optional(),
-  avgCadence: z.number().min(0).max(300).optional(),
-  calories: z.number().min(0).optional(),
-  steps: z.number().min(0).optional(),
   avgTemperatureCelsius: z.number().min(-50).max(60).optional(),
   isPr: z.boolean().optional(),
-  rpe: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5)]).optional(),
+  hasPain: z.string().optional(),
+  rpe: z.number().min(1).max(10).optional(),
   notes: z.string().optional(),
+  shoesId: z.string().optional(),
 });
 
 type CreateResultData = z.infer<typeof createActivitySchema>;
@@ -120,30 +100,13 @@ export const validateCreateActivityFields = ({
   elevationGainMeters,
   avgHeartRate,
   maxHeartRate,
-  avgCadence,
-  calories,
-  steps,
   avgTemperatureCelsius,
   isPr,
+  hasPain,
   rpe,
   notes,
-}: {
-  activityType: ActivityType;
-  workoutType: WorkoutType;
-  startTime: string;
-  distanceMeters?: number;
-  durationSeconds?: number;
-  elevationGainMeters?: number;
-  avgHeartRate?: number;
-  maxHeartRate?: number;
-  avgCadence?: number;
-  calories?: number;
-  steps?: number;
-  avgTemperatureCelsius?: number;
-  isPr?: boolean;
-  rpe?: RPE;
-  notes?: string;
-}): { success: boolean; errors: Record<string, string> | null; data: CreateResultData | null } => {
+  shoesId,
+}: CreateResultData): ValidationResponse<CreateResultData> => {
   const result = createActivitySchema.safeParse({
     activityType,
     workoutType,
@@ -153,13 +116,12 @@ export const validateCreateActivityFields = ({
     elevationGainMeters,
     avgHeartRate,
     maxHeartRate,
-    avgCadence,
-    calories,
-    steps,
     avgTemperatureCelsius,
     isPr,
+    hasPain,
     rpe,
     notes,
+    shoesId,
   });
 
   if (!result.success) {

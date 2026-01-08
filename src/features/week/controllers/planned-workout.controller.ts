@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { handleError } from "@/lib/errors/clientErrors.handler";
 import { getFreshIdToken } from "@/lib/firebase/token";
@@ -249,6 +249,10 @@ export const usePlannedWorkoutController = (startDate: string, endDate: string) 
       setLoading((prev) => ({ ...prev, delete: false }));
     }
   };
+
+  useEffect(() => {
+    handleFetchByDateRange();
+  }, [startDate, endDate]);
 
   return {
     // State

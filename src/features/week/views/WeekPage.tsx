@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { Download, Plus, RefreshCw, Loader2 } from "lucide-react";
 import { Button } from "@/lib/ui/button";
 import { Badge } from "@/lib/ui/badge";
@@ -10,23 +10,18 @@ import SummaryCard from "../components/SummaryCard";
 import { getWeekDateRange, getWeekDays, formatActivityType, formatWorkoutType } from "../utils/planned-workout.utils";
 import { usePlannedWorkoutController } from "../controllers/planned-workout.controller";
 import type { CreatePlannedWorkoutModel, PlannedWorkoutModel } from "../models/planned-workout.model";
+import { format } from "date-fns";
 
 export default function WeekPage() {
   const [weekOffset, setWeekOffset] = useState(0);
   const [openCreateWorkoutDialog, setOpenCreateWorkoutDialog] = useState(false);
+  const [selectedDay, setSelectedDay] = useState("");
 
-  // Calculate week date range based on offset
   const weekRange = useMemo(() => getWeekDateRange(weekOffset), [weekOffset]);
   const weekDays = useMemo(() => getWeekDays(weekRange.start), [weekRange.start]);
 
-  // Initialize controller with current week's date range
   const { plannedWorkouts, loading, handleFetchByDateRange, handleCreate } = usePlannedWorkoutController(weekRange.startStr, weekRange.endStr);
-
-  // Fetch workouts when week changes
-  useEffect(() => {
-    handleFetchByDateRange();
-  }, [weekRange.startStr, weekRange.endStr]);
-
+  console.log(plannedWorkouts);
   // Group workouts by date for easy lookup
   const workoutsByDate = useMemo(() => {
     const map = new Map<string, PlannedWorkoutModel[]>();
@@ -89,10 +84,6 @@ export default function WeekPage() {
             <Download className="size-4 mr-1.5" />
             Export
           </Button>
-          <Button size="sm" onClick={() => setOpenCreateWorkoutDialog(true)}>
-            <Plus className="size-4 mr-1.5" />
-            Create workout
-          </Button>
         </div>
       </div>
 
@@ -105,7 +96,7 @@ export default function WeekPage() {
 
       {/* Daily Breakdown */}
       <div className="border rounded-lg overflow-hidden">
-        <div className="grid grid-cols-[80px_1fr_1fr] bg-zinc-50 border-b text-xs font-medium text-muted-foreground uppercase tracking-wide">
+        <div className="grid grid-cols-[100px_1fr_1fr] bg-zinc-50 border-b text-xs font-medium text-muted-foreground uppercase tracking-wide">
           <div className="px-4 py-3">Day</div>
           <div className="px-4 py-3 border-l">Planned</div>
           <div className="px-4 py-3 border-l">Actual</div>
@@ -117,11 +108,11 @@ export default function WeekPage() {
         ) : (
           weekDays.map((day, index) => {
             const dayWorkouts = workoutsByDate.get(day.date) || [];
+            console.log(workoutsByDate);
             return (
-              <div key={day.date} className={cn("grid grid-cols-[80px_1fr_1fr]", index !== weekDays.length - 1 && "border-b")}>
-                <div className="px-4 py-4 font-medium text-sm">
-                  <div>{day.dayShort}</div>
-                  <div className="text-xs text-muted-foreground">{day.dayNum}</div>
+              <div key={day.date} className={cn("grid grid-cols-[100px_1fr_1fr]", index !== weekDays.length - 1 && "border-b")}>
+                <div className="px-4 py-4 font-medium text-sm flex items-center gap-1">
+                  <div>{format(day.date, "EEE do")}</div>
                 </div>
                 <div className="px-4 py-4 border-l">
                   {dayWorkouts.length > 0 ? (
@@ -143,7 +134,17 @@ export default function WeekPage() {
                       ))}
                     </div>
                   ) : (
-                    <span className="text-sm text-muted-foreground">—</span>
+                    <Button
+                      variant="outline"
+                      className="border-dashed w-full"
+                      onClick={() => {
+                        setOpenCreateWorkoutDialog(true);
+                        setSelectedDay(day.date);
+                      }}
+                    >
+                      <Plus className="size-4" />
+                      Add workout
+                    </Button>
                   )}
                 </div>
                 <div className="px-4 py-4 border-l">
@@ -160,6 +161,7 @@ export default function WeekPage() {
         onSubmit={handleCreateWorkout}
         loading={loading.create}
         weekStartDate={weekRange.start}
+        initialDate={selectedDay}
       />
     </div>
   );

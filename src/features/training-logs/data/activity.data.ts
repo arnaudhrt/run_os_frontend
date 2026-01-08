@@ -14,7 +14,6 @@ export async function syncGarmin({ token }: { token: string }): Promise<void> {
     console.error(response);
     throw new Error("Error syncing Garmin, check logs for more details");
   }
-  console.log(response.json());
 }
 
 export async function getAllActivities({ token }: { token: string }): Promise<ActivitiesResponse> {
@@ -29,7 +28,7 @@ export async function getAllActivities({ token }: { token: string }): Promise<Ac
 
   if (!response.ok) {
     console.error(response);
-    throw new Error("Error syncing Garmin, check logs for more details");
+    throw new Error("Error fetching all activities, check logs for more details");
   }
   const data = await response.json();
 

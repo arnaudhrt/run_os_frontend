@@ -4,9 +4,9 @@ import toast from "react-hot-toast";
 import { handleError } from "@/lib/errors/clientErrors.handler";
 import { getFreshIdToken } from "@/lib/firebase/token";
 import { createActivity, deleteActivity, getAllActivities, syncGarmin, updateActivity } from "../data/activity.data";
-import type { ActivityType, RPE, WorkoutType } from "@/lib/types/type";
+import type { ActivityType, WorkoutType } from "@/lib/types/type";
 import { validateCreateActivityFields, validateUpdateActivityFields } from "../validations/activity.validation";
-import { calculateAvgSpeed, structureActivitiesLog } from "../utils/format";
+import { structureActivitiesLog } from "../utils/format";
 
 export interface LoadingState {
   syncGarmin: boolean;
@@ -30,13 +30,12 @@ export interface CreateActivityParams {
   elevationGainMeters?: number;
   avgHeartRate?: number;
   maxHeartRate?: number;
-  avgCadence?: number;
-  calories?: number;
-  steps?: number;
   avgTemperatureCelsius?: number;
   isPr?: boolean;
-  rpe?: RPE;
+  hasPain?: string;
+  rpe?: number;
   notes?: string;
+  shoesId?: string;
   resetForm: () => void;
 }
 
@@ -47,15 +46,14 @@ export interface UpdateActivityParams {
   distanceMeters?: number;
   durationSeconds?: number;
   elevationGainMeters?: number;
-  elevationLossMeters?: number;
   avgHeartRate?: number;
   maxHeartRate?: number;
-  avgCadence?: number;
-  steps?: number;
-  calories?: number;
   avgTemperatureCelsius?: number;
-  rpe?: RPE;
+  isPr?: boolean;
+  hasPain?: string;
+  rpe?: number;
   notes?: string;
+  shoesId?: string;
   onClose: () => void;
 }
 
@@ -116,15 +114,14 @@ export const useActivityController = () => {
     distanceMeters,
     durationSeconds,
     elevationGainMeters,
-    elevationLossMeters,
     avgHeartRate,
     maxHeartRate,
-    avgCadence,
-    steps,
-    calories,
     avgTemperatureCelsius,
+    isPr,
+    hasPain,
     rpe,
     notes,
+    shoesId,
     onClose,
   }: UpdateActivityParams): Promise<void> => {
     setLoading((prev) => ({ ...prev, update: true }));
@@ -138,15 +135,14 @@ export const useActivityController = () => {
       distanceMeters,
       durationSeconds,
       elevationGainMeters,
-      elevationLossMeters,
       avgHeartRate,
       maxHeartRate,
-      avgCadence,
-      steps,
-      calories,
       avgTemperatureCelsius,
+      isPr,
+      hasPain,
       rpe,
       notes,
+      shoesId,
     });
 
     if (!success || !data) {
@@ -161,11 +157,6 @@ export const useActivityController = () => {
       return;
     }
 
-    let avgSpeed: number | undefined;
-    if (data.distanceMeters && data.durationSeconds) {
-      avgSpeed = calculateAvgSpeed(data.distanceMeters, data.durationSeconds);
-    }
-
     try {
       const token = await getFreshIdToken();
       const body = {
@@ -173,17 +164,15 @@ export const useActivityController = () => {
         ...(data.workoutType && { workout_type: data.workoutType }),
         ...(data.distanceMeters && { distance_meters: data.distanceMeters }),
         ...(data.durationSeconds && { duration_seconds: data.durationSeconds }),
-        ...(avgSpeed && { avg_speed_mps: avgSpeed }),
         ...(data.elevationGainMeters && { elevation_gain_meters: data.elevationGainMeters }),
-        ...(data.elevationLossMeters && { elevation_loss_meters: data.elevationLossMeters }),
         ...(data.avgHeartRate && { avg_heart_rate: data.avgHeartRate }),
         ...(data.maxHeartRate && { max_heart_rate: data.maxHeartRate }),
-        ...(data.avgCadence && { avg_cadence: data.avgCadence }),
-        ...(data.steps && { steps: data.steps }),
-        ...(data.calories && { calories: data.calories }),
         ...(data.avgTemperatureCelsius !== undefined && { avg_temperature_celsius: data.avgTemperatureCelsius }),
+        ...(data.isPr !== undefined && { is_pr: data.isPr }),
+        ...(data.hasPain !== undefined && { has_pain: data.hasPain }),
         ...(data.rpe && { rpe: data.rpe }),
         ...(data.notes !== undefined && { notes: data.notes }),
+        ...(data.shoesId && { shoes_id: data.shoesId }),
       };
       await updateActivity({ id: data.id, body, token });
       toast.success("Activity updated successfully");
@@ -208,13 +197,12 @@ export const useActivityController = () => {
     elevationGainMeters,
     avgHeartRate,
     maxHeartRate,
-    avgCadence,
-    calories,
-    steps,
     avgTemperatureCelsius,
     isPr,
+    hasPain,
     rpe,
     notes,
+    shoesId,
     resetForm,
   }: CreateActivityParams): Promise<void> => {
     setLoading((prev) => ({ ...prev, create: true }));
@@ -230,23 +218,18 @@ export const useActivityController = () => {
       elevationGainMeters,
       avgHeartRate,
       maxHeartRate,
-      avgCadence,
-      calories,
-      steps,
       avgTemperatureCelsius,
       isPr,
+      hasPain,
       rpe,
       notes,
+      shoesId,
     });
 
     if (!success || !data) {
       setValidationsErrors(errors);
       setLoading((prev) => ({ ...prev, create: false }));
       return;
-    }
-    let avgSpeed = 0;
-    if (data.distanceMeters && data.durationSeconds) {
-      avgSpeed = calculateAvgSpeed(data.distanceMeters, data.durationSeconds);
     }
 
     try {
@@ -257,18 +240,16 @@ export const useActivityController = () => {
         start_time: data.startTime,
         source: "manual" as const,
         is_pr: data.isPr ? true : false,
-        ...(distanceMeters && { distance_meters: data.distanceMeters }),
-        ...(durationSeconds && { duration_seconds: data.durationSeconds }),
-        ...(avgSpeed > 0 && { avg_speed_mps: avgSpeed }),
-        ...(elevationGainMeters && { elevation_gain_meters: data.elevationGainMeters }),
-        ...(avgHeartRate && { avg_heart_rate: data.avgHeartRate }),
-        ...(maxHeartRate && { max_heart_rate: data.maxHeartRate }),
-        ...(avgCadence && { avg_cadence: data.avgCadence }),
-        ...(steps && { steps: data.steps }),
-        ...(calories && { calories: data.calories }),
-        ...(avgTemperatureCelsius && { avg_temperature_celsius: data.avgTemperatureCelsius }),
-        ...(rpe && { rpe }),
-        ...(notes && { notes }),
+        ...(data.distanceMeters && { distance_meters: data.distanceMeters }),
+        ...(data.durationSeconds && { duration_seconds: data.durationSeconds }),
+        ...(data.elevationGainMeters && { elevation_gain_meters: data.elevationGainMeters }),
+        ...(data.avgHeartRate && { avg_heart_rate: data.avgHeartRate }),
+        ...(data.maxHeartRate && { max_heart_rate: data.maxHeartRate }),
+        ...(data.avgTemperatureCelsius !== undefined && { avg_temperature_celsius: data.avgTemperatureCelsius }),
+        ...(data.hasPain !== undefined && { has_pain: data.hasPain }),
+        ...(data.rpe && { rpe: data.rpe }),
+        ...(data.notes !== undefined && { notes: data.notes }),
+        ...(data.shoesId && { shoes_id: data.shoesId }),
       };
       const newActivity = await createActivity({ body, token });
       toast.success("Activity created successfully");
@@ -289,6 +270,7 @@ export const useActivityController = () => {
 
     if (!id || id.trim() === "") {
       toast.error("Please select an activity to delete");
+      setLoading((prev) => ({ ...prev, delete: false }));
       return;
     }
 

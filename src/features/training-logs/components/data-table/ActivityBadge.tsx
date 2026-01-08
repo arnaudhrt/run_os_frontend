@@ -1,13 +1,14 @@
 import type { ActivityType } from "@/lib/types/type";
 import { Badge } from "@/lib/ui/badge";
 
+type ActvityAndRestDay = ActivityType | "rest_day";
 interface ActivityBadgeProps {
-  type: ActivityType;
+  type: ActvityAndRestDay;
 }
 
 export function ActivityBadge({ type }: ActivityBadgeProps) {
   // Mapping styles to activity types
-  const styles: Record<ActivityType, { label: string; className: string }> = {
+  const styles: Record<ActvityAndRestDay, { label: string; className: string }> = {
     run: {
       label: "run",
       className: "bg-blue-100 text-blue-700 hover:bg-blue-100 border-transparent",
@@ -24,21 +25,13 @@ export function ActivityBadge({ type }: ActivityBadgeProps) {
       label: "hike",
       className: "bg-amber-100 text-amber-700 hover:bg-amber-100 border-transparent",
     },
-    bike: {
-      label: "bike",
-      className: "bg-yellow-100 text-yellow-700 hover:bg-yellow-100 border-transparent",
-    },
-    swim: {
-      label: "swim",
-      className: "bg-cyan-100 text-cyan-700 hover:bg-cyan-100 border-transparent",
-    },
     strength: {
       label: "strength",
       className: "bg-purple-100 text-purple-700 hover:bg-purple-100 border-transparent",
     },
-    cross_training: {
-      label: "xt",
-      className: "bg-purple-100 text-purple-700 hover:bg-purple-100 border-transparent",
+    cardio: {
+      label: "strength",
+      className: "bg-pink-100 text-pink-700 hover:bg-pink-100 border-transparent",
     },
     rest_day: {
       label: "rest",
@@ -46,7 +39,7 @@ export function ActivityBadge({ type }: ActivityBadgeProps) {
     },
   };
 
-  const { label, className } = styles[type] || styles.run;
+  const { label, className } = styles[type];
 
   return (
     <Badge variant="outline" className={`text-xs font-medium uppercase tracking-wider ${className}`}>

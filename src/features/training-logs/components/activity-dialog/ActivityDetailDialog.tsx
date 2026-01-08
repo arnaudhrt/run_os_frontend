@@ -21,7 +21,7 @@ import {
   Edit,
   Trash,
 } from "lucide-react";
-import { formatDistance, formatDuration, formatElevation, formatWorkoutType, speedToPaceFormatted, formatHeartRate } from "../../utils/format";
+import { formatDistance, formatDuration, formatElevation, formatWorkoutType, formatHeartRate } from "../../utils/format";
 import type { ActivityModel } from "../../models/activity.model";
 import { ActivityBadge } from "../data-table/ActivityBadge";
 import { format } from "date-fns";
@@ -31,17 +31,17 @@ import type { LoadingState, UpdateActivityParams, ValidationErrors } from "../..
 import EditActivityForm from "./EditActivityForm";
 import { useState } from "react";
 
-interface RunningActivityDetailsDialogProps {
+interface ActivityDetailDialogProps {
   activity: ActivityModel | null;
   open: boolean;
   loading: LoadingState;
   validationErrors: ValidationErrors;
-  onOpenChange: (open: boolean) => void;
+  onOpenChange: (open: ActivityModel | null) => void;
   updateActivity: (params: UpdateActivityParams) => Promise<void>;
   deleteActivity: (activityId: string, onClose: () => void) => Promise<void>;
 }
 
-export function RunningActivityDetailsDialog({
+export function ActivityDetailDialog({
   activity,
   open,
   onOpenChange,
@@ -49,7 +49,7 @@ export function RunningActivityDetailsDialog({
   updateActivity,
   loading,
   validationErrors,
-}: RunningActivityDetailsDialogProps) {
+}: ActivityDetailDialogProps) {
   const [isEditing, setIsEditing] = useState(false);
 
   if (!activity) return null;

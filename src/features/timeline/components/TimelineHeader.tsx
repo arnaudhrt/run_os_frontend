@@ -21,7 +21,7 @@ export default function TimelineHeader({ trainingCycles }: TimelineHeaderProps) 
       </div>
       {currentPhase && (
         <div className={cn("border rounded-lg px-4 py-3 min-w-40", headerPhaseColors[currentPhase.phase.phase_type])}>
-          <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Training Phase</p>
+          <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Current Training Phase</p>
           <p className="font-semibold">{formatPhaseType(currentPhase.phase.phase_type)}</p>
           <p className="text-sm text-muted-foreground">
             Week {currentPhase.weekNumber}/{currentPhase.totalWeeks}

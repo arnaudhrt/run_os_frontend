@@ -53,7 +53,7 @@ export function CreatePlannedWorkoutDialog({ open, onOpenChange, onSubmit, loadi
   const totalSteps = skipDaySelection ? 4 : 5;
 
   // Map actual step to display step (accounting for skipped step)
-  const getDisplayStep = () => (skipDaySelection ? step + 1 : step);
+  const getDisplayStep = () => (skipDaySelection ? step : step);
   const displayStep = getDisplayStep();
 
   useEffect(() => {
@@ -138,13 +138,13 @@ export function CreatePlannedWorkoutDialog({ open, onOpenChange, onSubmit, loadi
       <DialogContent className="max-w-md! p-0! overflow-hidden">
         {/* Progress bar */}
         <div className="h-1 bg-muted">
-          <div className="h-full bg-primary transition-all duration-300 ease-out" style={{ width: `${((displayStep + 1) / totalSteps) * 100}%` }} />
+          <div className="h-full bg-primary transition-all duration-300 ease-out" style={{ width: `${(displayStep / totalSteps) * 100}%` }} />
         </div>
 
         <div className="p-6 min-h-[320px] flex flex-col">
           {/* Step indicator */}
           <div className="text-xs text-muted-foreground mb-6">
-            Step {displayStep + 1} of {totalSteps}
+            Step {displayStep} of {totalSteps}
           </div>
 
           {/* Content area with transitions */}
@@ -259,7 +259,7 @@ export function CreatePlannedWorkoutDialog({ open, onOpenChange, onSubmit, loadi
                           onKeyDown={handleKeyDown}
                           className="h-12"
                         />
-                        <span className="text-muted-foreground absolute right-2 top-1/2 -translate-y-1/2">km</span>
+                        <span className="text-muted-foreground absolute right-2 top-1/2 -translate-y-1/2 p-1 bg-white">km</span>
                       </div>
                       <div className="flex items-center gap-3 flex-1">
                         <Input
