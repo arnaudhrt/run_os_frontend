@@ -1,6 +1,7 @@
 import type { ActivityModel, DayEntry, WeekEntry, MonthEntry, YearEntry, StructuredActivitiesLog } from "../models/activity.model";
 
-export function formatDistance(meters: number): string {
+export function formatDistance(meters: number | undefined): string {
+  if (!meters || meters <= 0) return "-";
   const km = meters / 1000;
   return `${km.toFixed(1)} km`;
 }

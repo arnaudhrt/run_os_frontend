@@ -68,7 +68,7 @@ export default function ActivityTable({
             })}
           </TableBody>
         </Table>
-        <ActivityDetailDialog
+        {/* <ActivityDetailDialog
           activity={openActivityDialog}
           open={openActivityDialog !== null}
           onOpenChange={setOpenActivityDialog}
@@ -76,9 +76,8 @@ export default function ActivityTable({
           updateActivity={handleUpdateActivity}
           loading={loading}
           validationErrors={validationErrors}
-        />
+        /> */}
       </div>
-      <div className="py-2"></div>
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { Button } from "@/lib/ui/button";
 import { Input } from "@/lib/ui/input";
 import { Textarea } from "@/lib/ui/textarea";
 import { Loader2, ArrowRight, ArrowLeft, Check } from "lucide-react";
-import { activityTypes, workoutTypes } from "@/lib/types/type";
+import { activityTypes, runningWorkoutTypes } from "@/lib/types/type";
 import { cn } from "@/lib/utils";
 import { useCreatePlannedWorkoutStore } from "../stores/create-planned-workout.store";
 import { formatActivityType, formatWorkoutType, timeSlotOptions, parseDurationToSeconds, getWeekDays } from "../utils/planned-workout.utils";
@@ -87,18 +87,18 @@ export function CreatePlannedWorkoutDialog({ open, onOpenChange, onSubmit, loadi
   const handleActivityTypeSelect = (type: (typeof activityTypes)[number]) => {
     setActivityType(type);
     // If rest day, submit directly
-    if (type === "rest_day") {
-      onSubmit({
-        planned_date: plannedDate,
-        time_slot: "single",
-        activity_type: "rest_day",
-        workout_type: "other",
-        target_distance_meters: null,
-        target_duration_seconds: null,
-        description: null,
-        activity_id: null,
-      });
-    }
+    // if (type === "rest_day") {
+    //   onSubmit({
+    //     planned_date: plannedDate,
+    //     time_slot: "single",
+    //     activity_type: "rest_day",
+    //     workout_type: "other",
+    //     target_distance_meters: null,
+    //     target_duration_seconds: null,
+    //     description: null,
+    //     activity_id: null,
+    //   });
+    // }
   };
 
   const handleNext = () => {
@@ -113,8 +113,8 @@ export function CreatePlannedWorkoutDialog({ open, onOpenChange, onSubmit, loadi
     switch (step) {
       case 0:
         return plannedDate.length > 0;
-      case 1:
-        return activityType !== undefined && activityType !== "rest_day";
+      // case 1:
+      //   return activityType !== undefined && activityType !== "rest_day";
       case 2:
         return workoutType !== undefined;
       case 3:
@@ -205,7 +205,7 @@ export function CreatePlannedWorkoutDialog({ open, onOpenChange, onSubmit, loadi
                 <div className="space-y-4">
                   <h2 className="text-xl font-medium">What kind of workout?</h2>
                   <div className="flex flex-wrap gap-2">
-                    {workoutTypes.map((type) => (
+                    {runningWorkoutTypes.map((type) => (
                       <Button
                         key={type}
                         variant="outline"

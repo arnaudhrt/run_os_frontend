@@ -1,23 +1,13 @@
-import { useState } from "react";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/lib/ui/dialog";
+import { Dialog, DialogContent } from "@/lib/ui/dialog";
 import { Button } from "@/lib/ui/button";
 import { Input } from "@/lib/ui/input";
-import { Label } from "@/lib/ui/label";
 import { Textarea } from "@/lib/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/lib/ui/select";
-import { Loader2, Plus, X } from "lucide-react";
-import {
-  activityTypes,
-  type ActivityType,
-  type RPE,
-  type TrainingEffectLabel,
-  type WorkoutType,
-  workoutTypes,
-  trainingEffectLabels,
-} from "@/lib/types/type";
+import { Loader2, ArrowRight, ArrowLeft, Check } from "lucide-react";
+import { activityTypes, runningWorkoutTypes, strengthWorkoutTypes, type ActivityType, type WorkoutType } from "@/lib/types/type";
+import { cn } from "@/lib/utils";
+import { useCreateActivityStore } from "../../stores/create-activity.store";
 import type { CreateActivityParams } from "../../controllers/activity.controller";
-import { formatWorkoutType } from "../../utils/format";
-import { Popover, PopoverContent, PopoverTrigger } from "@/lib/ui/popover";
+import { formatActivityType, formatWorkoutType } from "../../utils/format";
 
 interface CreateActivityDialogProps {
   open: boolean;
@@ -26,346 +16,367 @@ interface CreateActivityDialogProps {
   loading?: boolean;
 }
 
-const optionalFieldsInitial = [
-  { value: "elevation", label: "Elevation Gain" },
-  { value: "rpe", label: "RPE" },
-  { value: "trainingEffect", label: "Training Effect" },
-  { value: "avgTemperatureCelsius", label: "Avg Temperature" },
-  { value: "calories", label: "Calories" },
-  { value: "steps", label: "Steps" },
-  { value: "avgCadence", label: "Avg Cadence" },
-  { value: "isPr", label: "PR" },
-  { value: "avgHeartRate", label: "Avg Heart Rate" },
-  { value: "maxHeartRate", label: "Max Heart Rate" },
-  { value: "notes", label: "Notes" },
+const rpeOptions = [
+  { value: "1", label: "Very Easy", description: "Could do this all day" },
+  { value: "2", label: "Easy", description: "Comfortable conversation pace" },
+  { value: "3", label: "Moderate", description: "Slightly challenging" },
+  { value: "4", label: "Hard", description: "Pushing your limits" },
+  { value: "5", label: "Max Effort", description: "All out, couldn't do more" },
 ];
 
 export function CreateActivityDialog({ open, onOpenChange, onSubmit, loading }: CreateActivityDialogProps) {
-  const [activityType, setActivityType] = useState<ActivityType>("run");
-  const [workoutType, setWorkoutType] = useState<WorkoutType>("easy_run");
-  const [startTime, setStartTime] = useState(() => {
-    const now = new Date();
-    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-    return now.toISOString().slice(0, 16);
-  });
+  const {
+    step,
+    direction,
+    activityType,
+    workoutType,
+    startTime,
+    distance,
+    hours,
+    minutes,
+    seconds,
+    elevation,
+    avgHeartRate,
+    maxHeartRate,
+    rpe,
+    notes,
+    setActivityType,
+    setWorkoutType,
+    setStartTime,
+    setDistance,
+    setHours,
+    setMinutes,
+    setSeconds,
+    setElevation,
+    setAvgHeartRate,
+    setMaxHeartRate,
+    setRpe,
+    setNotes,
+    goNext,
+    goBack,
+    reset,
+  } = useCreateActivityStore();
 
-  // Always visible fields
-  const [distance, setDistance] = useState("");
-  const [hours, setHours] = useState("");
-  const [minutes, setMinutes] = useState("");
-  const [seconds, setSeconds] = useState("");
+  const isRunningActivity = activityType === "run" || activityType === "trail" || activityType === "treadmill" || activityType === "hike";
+  const workoutTypeOptions = isRunningActivity ? runningWorkoutTypes : strengthWorkoutTypes;
 
-  // Optional fields
-  const [selectedFields, setSelectedFields] = useState<{ value: string; label: string }[]>([]);
-  const [optionalFields, setOptionalFields] = useState<{ value: string; label: string }[]>(optionalFieldsInitial);
-  const [openOptions, setOpenOptions] = useState(false);
-  const [elevation, setElevation] = useState("");
-  const [rpe, setRpe] = useState<RPE | undefined>();
-  const [trainingEffect, setTrainingEffect] = useState<TrainingEffectLabel | undefined>();
-  const [notes, setNotes] = useState("");
-  const [avgTemperatureCelsius, setAvgTemperatureCelsius] = useState<number | undefined>();
-  const [calories, setCalories] = useState<number | undefined>();
-  const [steps, setSteps] = useState<number | undefined>();
-  const [avgCadence, setAvgCadence] = useState<number | undefined>();
-  const [isPr, setIsPr] = useState<boolean | undefined>();
-  const [avgHeartRate, setAvgHeartRate] = useState<number | undefined>();
-  const [maxHeartRate, setMaxHeartRate] = useState<number | undefined>();
+  const totalSteps = 4;
 
-  const addField = (field: { value: string; label: string }) => {
-    setSelectedFields((prev) => [...prev, field]);
-    setOptionalFields((prev) => prev.filter((f) => f.value !== field.value));
-  };
-
-  const removeField = (field: { value: string; label: string }) => {
-    setSelectedFields((prev) => prev.filter((f) => f !== field));
-    setOptionalFields((prev) => [...prev, field]);
-    switch (field.value) {
-      case "elevation":
-        setElevation("");
-        break;
-      case "rpe":
-        setRpe(undefined);
-        break;
-      case "trainingEffect":
-        setTrainingEffect(undefined);
-        break;
-      case "notes":
-        setNotes("");
-        break;
-      case "avgTemperatureCelsius":
-        setAvgTemperatureCelsius(undefined);
-        break;
-      case "calories":
-        setCalories(undefined);
-        break;
-      case "steps":
-        setSteps(undefined);
-        break;
-      case "avgCadence":
-        setAvgCadence(undefined);
-        break;
-      case "isPr":
-        setIsPr(undefined);
-        break;
-      case "avgHeartRate":
-        setAvgHeartRate(undefined);
-        break;
-      case "maxHeartRate":
-        setMaxHeartRate(undefined);
-        break;
-    }
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen) reset();
+    onOpenChange(newOpen);
   };
 
   const handleSubmit = () => {
     const durationSeconds = parseInt(hours || "0") * 3600 + parseInt(minutes || "0") * 60 + parseInt(seconds || "0");
-    const fields = selectedFields.map((f) => f.value);
 
     onSubmit({
-      resetForm,
       activityType,
       workoutType,
       startTime: new Date(startTime).toISOString(),
       ...(distance && { distanceMeters: parseFloat(distance) * 1000 }),
       ...(durationSeconds > 0 && { durationSeconds }),
-      ...(fields.includes("elevation") && elevation && { elevationGainMeters: parseFloat(elevation) }),
-      ...(fields.includes("rpe") && rpe && { rpe }),
-      ...(fields.includes("trainingEffect") && trainingEffect && { trainingEffectLabel: trainingEffect }),
-      ...(fields.includes("notes") && notes && { notes }),
-      ...(fields.includes("avgTemperatureCelsius") && avgTemperatureCelsius && { avgTemperatureCelsius }),
-      ...(fields.includes("calories") && calories && { calories }),
-      ...(fields.includes("steps") && steps && { steps }),
-      ...(fields.includes("avgCadence") && avgCadence && { avgCadence }),
-      ...(fields.includes("isPr") && isPr && { isPr }),
-      ...(fields.includes("avgHeartRate") && avgHeartRate && { avgHeartRate }),
-      ...(fields.includes("maxHeartRate") && maxHeartRate && { maxHeartRate }),
+      ...(elevation && { elevationGainMeters: parseFloat(elevation) }),
+      ...(avgHeartRate && { avgHeartRate: parseInt(avgHeartRate) }),
+      ...(maxHeartRate && { maxHeartRate: parseInt(maxHeartRate) }),
+      ...(rpe && { rpe: parseInt(rpe) }),
+      ...(notes && { notes }),
+      resetForm: () => {
+        reset();
+        onOpenChange(false);
+      },
     });
   };
 
-  const resetForm = () => {
-    setActivityType("run");
-    setWorkoutType("easy_run");
-    const now = new Date();
-    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-    setStartTime(now.toISOString().slice(0, 16));
-    setDistance("");
-    setHours("");
-    setMinutes("");
-    setSeconds("");
-    setSelectedFields([]);
-    setOptionalFields(optionalFieldsInitial);
-    setElevation("");
-    setRpe(undefined);
-    setTrainingEffect(undefined);
-    setNotes("");
-    setAvgTemperatureCelsius(undefined);
-    setCalories(undefined);
-    setSteps(undefined);
-    setAvgCadence(undefined);
-    setIsPr(undefined);
-    setAvgHeartRate(undefined);
-    setMaxHeartRate(undefined);
+  const handleNext = () => {
+    if (step < totalSteps - 1) {
+      goNext();
+    } else {
+      handleSubmit();
+    }
   };
 
-  const handleOpenChange = (newOpen: boolean) => {
-    if (!newOpen) resetForm();
-    onOpenChange(newOpen);
+  const canProceed = () => {
+    switch (step) {
+      case 0:
+        return activityType !== undefined && workoutType !== undefined;
+      case 1:
+        return startTime.length > 0;
+      case 2:
+        return true; // Distance and duration are optional
+      case 3:
+        return true; // All optional
+      default:
+        return false;
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && canProceed()) {
+      e.preventDefault();
+      handleNext();
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-lg!">
-        <DialogHeader>
-          <DialogTitle>Create Activity</DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-4 max-h-[600px]! scrollable overflow-y-auto!">
-          {/* Activity & Workout Type */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label>Activity Type</Label>
-              <Select value={activityType} onValueChange={(v) => setActivityType(v as ActivityType)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="p-1">
-                  {activityTypes.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {formatWorkoutType(type)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label>Workout Type</Label>
-              <Select value={workoutType} onValueChange={(v) => setWorkoutType(v as WorkoutType)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {workoutTypes.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {formatWorkoutType(type)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label>Date & Time</Label>
-            <Input type="datetime-local" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label>Distance</Label>
-            <div className="flex items-center gap-2">
-              <Input type="number" step="0.01" placeholder="0.00" value={distance} onChange={(e) => setDistance(e.target.value)} />
-              <span className="text-sm text-muted-foreground w-8">km</span>
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label>Duration</Label>
-            <div className="flex items-center gap-2">
-              <Input type="number" min="0" placeholder="0" value={hours} onChange={(e) => setHours(e.target.value)} className="w-20" />
-              <span className="text-xs text-muted-foreground">h</span>
-              <Input type="number" min="0" max="59" placeholder="0" value={minutes} onChange={(e) => setMinutes(e.target.value)} className="w-20" />
-              <span className="text-xs text-muted-foreground">m</span>
-              <Input type="number" min="0" max="59" placeholder="0" value={seconds} onChange={(e) => setSeconds(e.target.value)} className="w-20" />
-              <span className="text-xs text-muted-foreground">s</span>
-            </div>
-          </div>
-
-          {/* Optional Fields */}
-          {selectedFields.map((field) => (
-            <div key={field.value} className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <Label>{field.label}</Label>
-                <button type="button" onClick={() => removeField(field)} className="text-muted-foreground hover:text-foreground p-0.5">
-                  <X className="size-3.5" />
-                </button>
-              </div>
-
-              {field.value === "elevation" && (
-                <div className="flex items-center gap-2">
-                  <Input type="number" placeholder="0" value={elevation} onChange={(e) => setElevation(e.target.value)} />
-                  <span className="text-sm text-muted-foreground w-8">m</span>
-                </div>
-              )}
-
-              {field.value === "rpe" && (
-                <Select value={rpe?.toString()} onValueChange={(v) => setRpe(parseInt(v) as RPE)}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select RPE" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[1, 2, 3, 4, 5].map((value) => (
-                      <SelectItem key={value} value={value.toString()}>
-                        {value} - {["Very Easy", "Easy", "Moderate", "Hard", "Max Effort"][value - 1]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-
-              {field.value === "trainingEffect" && (
-                <Select value={trainingEffect} onValueChange={(v) => setTrainingEffect(v as TrainingEffectLabel)}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select Training Effect" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {trainingEffectLabels.map((option) => (
-                      <SelectItem key={option} value={option}>
-                        {option}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-
-              {field.value === "avgTemperatureCelsius" && (
-                <Input
-                  type="number"
-                  placeholder="0"
-                  value={avgTemperatureCelsius}
-                  onChange={(e) => setAvgTemperatureCelsius(Number(e.target.value))}
-                />
-              )}
-
-              {field.value === "calories" && (
-                <Input type="number" placeholder="0" value={calories} onChange={(e) => setCalories(Number(e.target.value))} />
-              )}
-
-              {field.value === "steps" && <Input type="number" placeholder="0" value={steps} onChange={(e) => setSteps(Number(e.target.value))} />}
-
-              {field.value === "avgCadence" && (
-                <Input type="number" placeholder="0" value={avgCadence} onChange={(e) => setAvgCadence(Number(e.target.value))} />
-              )}
-
-              {field.value === "isPr" && (
-                <Select value={isPr?.toString()} onValueChange={(v) => setIsPr(v === "true")}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select PR" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="true">Yes</SelectItem>
-                    <SelectItem value="false">No</SelectItem>
-                  </SelectContent>
-                </Select>
-              )}
-
-              {field.value === "avgHeartRate" && (
-                <Input type="number" placeholder="0" value={avgHeartRate} onChange={(e) => setAvgHeartRate(Number(e.target.value))} />
-              )}
-
-              {field.value === "maxHeartRate" && (
-                <Input type="number" placeholder="0" value={maxHeartRate} onChange={(e) => setMaxHeartRate(Number(e.target.value))} />
-              )}
-
-              {field.value === "notes" && (
-                <Textarea
-                  placeholder="Add notes about your activity..."
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  className="min-h-20"
-                />
-              )}
-            </div>
-          ))}
-
-          <Popover open={openOptions} onOpenChange={setOpenOptions}>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="w-full border-dashed text-muted-foreground">
-                <Plus className="w-4 h-4 text-primary" />
-                Add Field
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="gap-0">
-              {optionalFields.map((el, i) => (
-                <div
-                  key={i}
-                  className="rounded-md py-1 pr-8 pl-1.5 text-sm hover:bg-accent cursor-pointer"
-                  onClick={() => {
-                    addField(el);
-                    setOpenOptions(false);
-                  }}
-                >
-                  {el.label}
-                </div>
-              ))}
-            </PopoverContent>
-          </Popover>
+      <DialogContent className="max-w-md! p-0! overflow-hidden">
+        {/* Progress bar */}
+        <div className="h-1 bg-muted">
+          <div className="h-full bg-primary transition-all duration-300 ease-out" style={{ width: `${((step + 1) / totalSteps) * 100}%` }} />
         </div>
 
-        <DialogFooter>
-          <Button onClick={handleSubmit} disabled={loading}>
-            Create Activity
-            {loading && <Loader2 className="size-4 animate-spin mr-1" />}
-          </Button>
-        </DialogFooter>
+        <div className="p-6 min-h-[320px] flex flex-col">
+          {/* Step indicator */}
+          <div className="text-xs text-muted-foreground mb-6">
+            Step {step + 1} of {totalSteps}
+          </div>
+
+          {/* Content area with transitions */}
+          <div className="flex-1 flex flex-col">
+            <div
+              key={step}
+              className={cn(
+                "flex-1 flex flex-col animate-in duration-200",
+                direction === "forward" ? "slide-in-from-right-4" : "slide-in-from-left-4",
+                "fade-in"
+              )}
+            >
+              {/* Step 0: Activity & Workout Type */}
+              {step === 0 && (
+                <div className="space-y-5">
+                  <div className="space-y-3">
+                    <h2 className="text-xl font-medium">What type of activity?</h2>
+                    <div className="flex flex-wrap gap-2">
+                      {activityTypes.map((type) => (
+                        <Button
+                          key={type}
+                          variant="outline"
+                          size="sm"
+                          className={cn(activityType === type && "bg-muted/50 ring-2 ring-primary ring-offset-1")}
+                          onClick={() => setActivityType(type)}
+                        >
+                          {formatActivityType(type)}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h2 className="text-lg font-medium text-muted-foreground">What kind of workout?</h2>
+                    <div className="flex flex-wrap gap-2">
+                      {workoutTypeOptions.map((type) => (
+                        <Button
+                          key={type}
+                          variant="outline"
+                          size="sm"
+                          className={cn(workoutType === type && "bg-muted/50 ring-2 ring-primary ring-offset-1")}
+                          onClick={() => setWorkoutType(type as WorkoutType)}
+                        >
+                          {formatWorkoutType(type)}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 1: Date & Time */}
+              {step === 1 && (
+                <div className="space-y-4">
+                  <h2 className="text-xl font-medium">When did you do it?</h2>
+                  <Input
+                    type="datetime-local"
+                    value={startTime}
+                    onChange={(e) => setStartTime(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    autoFocus
+                    className="text-lg h-12"
+                  />
+                </div>
+              )}
+
+              {/* Step 2: Distance & Duration */}
+              {step === 2 && (
+                <div className="space-y-5">
+                  <div className="space-y-3">
+                    <h2 className="text-xl font-medium">How far did you go?</h2>
+                    <p className="text-sm text-muted-foreground -mt-2">Optional - you can skip this</p>
+                    <div className="flex items-center gap-3">
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                        value={distance}
+                        onChange={(e) => setDistance(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        autoFocus
+                        className="h-12 text-lg"
+                      />
+                      <span className="text-muted-foreground w-8">km</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h2 className="text-lg font-medium text-muted-foreground">How long did it take?</h2>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        value={hours}
+                        onChange={(e) => setHours(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        className="h-12 w-20 text-center"
+                      />
+                      <span className="text-sm text-muted-foreground">h</span>
+                      <Input
+                        type="number"
+                        min="0"
+                        max="59"
+                        placeholder="0"
+                        value={minutes}
+                        onChange={(e) => setMinutes(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        className="h-12 w-20 text-center"
+                      />
+                      <span className="text-sm text-muted-foreground">m</span>
+                      <Input
+                        type="number"
+                        min="0"
+                        max="59"
+                        placeholder="0"
+                        value={seconds}
+                        onChange={(e) => setSeconds(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        className="h-12 w-20 text-center"
+                      />
+                      <span className="text-sm text-muted-foreground">s</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 3: Optional Details */}
+              {step === 3 && (
+                <div className="space-y-4">
+                  <div>
+                    <h2 className="text-xl font-medium">Any extra details?</h2>
+                    <p className="text-sm text-muted-foreground">All optional - feel free to skip</p>
+                  </div>
+
+                  <div className="space-y-4 max-h-[300px] overflow-y-auto scrollable pr-2">
+                    {/* Elevation (for trail/hike) */}
+                    {(activityType === "trail" || activityType === "hike") && (
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Elevation Gain</label>
+                        <div className="flex items-center gap-3">
+                          <Input
+                            type="number"
+                            placeholder="0"
+                            value={elevation}
+                            onChange={(e) => setElevation(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            className="h-10"
+                          />
+                          <span className="text-muted-foreground w-8">m</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Heart Rate */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Avg Heart Rate</label>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="number"
+                            placeholder="0"
+                            value={avgHeartRate}
+                            onChange={(e) => setAvgHeartRate(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            className="h-10"
+                          />
+                          <span className="text-muted-foreground text-sm">bpm</span>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Max Heart Rate</label>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="number"
+                            placeholder="0"
+                            value={maxHeartRate}
+                            onChange={(e) => setMaxHeartRate(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            className="h-10"
+                          />
+                          <span className="text-muted-foreground text-sm">bpm</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* RPE */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">How hard was it? (RPE)</label>
+                      <div className="grid gap-1.5">
+                        {rpeOptions.map((option) => (
+                          <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => setRpe(rpe === option.value ? "" : option.value)}
+                            className={cn(
+                              "p-2 rounded-lg border text-left transition-all text-sm",
+                              rpe === option.value ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
+                            )}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium">{option.label}</span>
+                              <span className="text-muted-foreground text-xs">{option.value}/5</span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Notes */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Notes</label>
+                      <Textarea
+                        placeholder="How did it feel? Any observations..."
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        className="min-h-20 resize-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Navigation */}
+          <div className="flex items-center justify-between mt-6 pt-4 border-t">
+            <Button variant="ghost" onClick={goBack} disabled={step === 0} className="gap-1">
+              <ArrowLeft className="size-4" />
+              Back
+            </Button>
+
+            <Button onClick={handleNext} disabled={!canProceed() || loading} className="gap-1">
+              {step === totalSteps - 1 ? (
+                <>
+                  Create Activity
+                  {loading ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
+                </>
+              ) : (
+                <>
+                  Continue
+                  <ArrowRight className="size-4" />
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );

@@ -3,13 +3,18 @@ import { StatsSummary } from "../components/StatsBloc";
 import TableFilters from "../components/data-table/TableFilters";
 import YearSection from "../components/YearSection";
 import { useActivityController } from "../controllers/activity.controller";
+import { useFilterActivityStore } from "../stores/filter-activity.store";
 
 export default function Ledger() {
   const { handleSyncGarmin, loading, structuredActivitiesLog, handleUpdateActivity, handleCreateActivity, handleDeleteActivity, validationsErrors } =
     useActivityController();
+  const { order } = useFilterActivityStore();
   if (!structuredActivitiesLog) {
     return <LoaderScreen />;
   }
+
+  const orderedYears = order === "asc" ? structuredActivitiesLog.years : [...structuredActivitiesLog.years].reverse();
+
   return (
     <div className="max-w-6xl mx-auto px-8 py-12">
       <header className="flex justify-between items-center pb-4 mb-8">
@@ -28,7 +33,7 @@ export default function Ledger() {
       </header>
       <TableFilters garminSync={handleSyncGarmin} loading={loading} createActivity={handleCreateActivity} />
       <div className="space-y-4">
-        {structuredActivitiesLog.years.map((year) => (
+        {orderedYears.map((year) => (
           <YearSection
             key={year.year}
             yearEntry={year}

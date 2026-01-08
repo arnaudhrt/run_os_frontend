@@ -19,7 +19,7 @@ export function ActivityBadge({ type }: ActivityBadgeProps) {
     },
     treadmill: {
       label: "treadmill",
-      className: "bg-slate-100 text-slate-600 hover:bg-slate-100 border-transparent",
+      className: "bg-emerald-100 text-emerald-600 hover:bg-emerald-100 border-transparent",
     },
     hike: {
       label: "hike",

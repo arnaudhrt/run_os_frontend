@@ -17,7 +17,6 @@ export default function RestDayTableRow({ index, date }: { index: number; date: 
       <TableCell></TableCell>
       <TableCell></TableCell>
       <TableCell></TableCell>
-      <TableCell></TableCell>
     </TableRow>
   );
 }

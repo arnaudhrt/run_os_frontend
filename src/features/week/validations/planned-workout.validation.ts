@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { activityTypes, workoutTypes } from "@/lib/types/type";
+import { activityTypes, runningWorkoutTypes } from "@/lib/types/type";
 import type { CreatePlannedWorkoutParams, UpdatePlannedWorkoutParams } from "../controllers/planned-workout.controller";
 
 const timeSlots = ["am", "pm", "single"] as const;
@@ -8,7 +8,7 @@ const createPlannedWorkoutSchema = z.object({
   plannedDate: z.string().min(1, "Planned date is required"),
   timeSlot: z.enum(timeSlots, { message: "Time slot must be am, pm, or single" }),
   activityType: z.enum(activityTypes, { message: "Activity type is required" }),
-  workoutType: z.enum(workoutTypes, { message: "Workout type is required" }).optional(),
+  workoutType: z.enum(runningWorkoutTypes, { message: "Workout type is required" }).optional(),
   targetDistanceMeters: z.number().positive("Distance must be positive").nullable().optional(),
   targetDurationSeconds: z.number().positive("Duration must be positive").nullable().optional(),
   description: z.string().nullable().optional(),
@@ -41,7 +41,7 @@ const updatePlannedWorkoutSchema = z.object({
   plannedDate: z.string().min(1, "Planned date is required").optional(),
   timeSlot: z.enum(timeSlots, { message: "Time slot must be am, pm, or single" }).optional(),
   activityType: z.enum(activityTypes, { message: "Activity type is required" }).optional(),
-  workoutType: z.enum(workoutTypes, { message: "Workout type is required" }).optional(),
+  workoutType: z.enum(runningWorkoutTypes, { message: "Workout type is required" }).optional(),
   targetDistanceMeters: z.number().positive("Distance must be positive").nullable().optional(),
   targetDurationSeconds: z.number().positive("Duration must be positive").nullable().optional(),
   description: z.string().nullable().optional(),

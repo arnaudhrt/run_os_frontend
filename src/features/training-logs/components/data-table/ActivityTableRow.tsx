@@ -101,11 +101,11 @@ export default function ActivityTableRow({
                 )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="gap-0 max-w-25">
+            <PopoverContent className="gap-0 max-w-[150px]">
               {rpe.map((el, i) => (
                 <div
                   key={i}
-                  className="rounded-md py-1 pr-8 pl-1.5 text-sm hover:bg-accent"
+                  className="rounded-md py-1 pr-8 pl-1.5 text-sm hover:bg-accent cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleUpdateActivity({
@@ -117,7 +117,7 @@ export default function ActivityTableRow({
                     });
                   }}
                 >
-                  {formatRpe(el)}
+                  <span className="text-sm">{formatRpe(el)}</span>
                 </div>
               ))}
             </PopoverContent>

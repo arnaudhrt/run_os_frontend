@@ -4,6 +4,7 @@ import { ButtonGroup } from "@/lib/ui/button-group";
 import { ArrowDown, ArrowUp, Loader2, Plus } from "lucide-react";
 import type { CreateActivityParams, LoadingState } from "../../controllers/activity.controller";
 import { CreateActivityDialog } from "../activity-dialog/CreateActivityDialog";
+import { useFilterActivityStore } from "../../stores/filter-activity.store";
 
 export default function TableFilters({
   garminSync,
@@ -15,16 +16,17 @@ export default function TableFilters({
   createActivity: (params: CreateActivityParams) => void;
 }) {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const { order, setOrder } = useFilterActivityStore();
 
   return (
     <>
       <div className="flex items-center justify-between mb-3">
         <ButtonGroup>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" className={`${order === "asc" && "bg-muted"}`} onClick={() => setOrder("asc")}>
             Asc
             <ArrowUp className="size-3" />
           </Button>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" className={`${order === "desc" && "bg-muted"}`} onClick={() => setOrder("desc")}>
             Desc
             <ArrowDown className="size-3" />
           </Button>
