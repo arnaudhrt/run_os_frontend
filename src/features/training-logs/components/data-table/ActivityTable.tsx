@@ -15,7 +15,6 @@ export default function ActivityTable({
   handleUpdateActivity,
   handleDeleteActivity,
   loading,
-  validationErrors,
 }: {
   week: WeekEntry | null;
   days: DayEntry[];
@@ -24,7 +23,8 @@ export default function ActivityTable({
   loading: LoadingState;
   validationErrors: ValidationErrors;
 }) {
-  const [openActivityDialog, setOpenActivityDialog] = useState<ActivityModel | null>(null);
+  const [openActivityDialog, setOpenActivityDialog] = useState(false);
+  const [selectedActivity, setSelectedActivity] = useState<ActivityModel | null>(null);
 
   if (!week || !days) return null;
   return (
@@ -59,6 +59,7 @@ export default function ActivityTable({
                     activity={activity}
                     day={day}
                     index={activityIndex}
+                    setSelectedActivity={setSelectedActivity}
                     setOpenActivityDialog={setOpenActivityDialog}
                     handleUpdateActivity={handleUpdateActivity}
                     loading={loading.update}
@@ -68,15 +69,15 @@ export default function ActivityTable({
             })}
           </TableBody>
         </Table>
-        {/* <ActivityDetailDialog
-          activity={openActivityDialog}
-          open={openActivityDialog !== null}
-          onOpenChange={setOpenActivityDialog}
-          deleteActivity={handleDeleteActivity}
-          updateActivity={handleUpdateActivity}
-          loading={loading}
-          validationErrors={validationErrors}
-        /> */}
+        {openActivityDialog && (
+          <ActivityDetailDialog
+            activity={selectedActivity}
+            open={openActivityDialog}
+            onOpenChange={setOpenActivityDialog}
+            setSelectedActivity={setSelectedActivity}
+            deleteActivity={handleDeleteActivity}
+          />
+        )}
       </div>
     </div>
   );

@@ -1,322 +1,197 @@
-import type React from "react";
-import { Dialog, DialogContent, DialogTitle } from "@/lib/ui/dialog";
+import { Calendar, Timer, TrendingUp, Heart, Thermometer, FileText, Trophy, Trash, AlertTriangle } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/lib/ui/dialog";
 import { Badge } from "@/lib/ui/badge";
 import { Separator } from "@/lib/ui/separator";
-import {
-  Timer,
-  TrendingUp,
-  Heart,
-  Zap,
-  Thermometer,
-  FileText,
-  Activity,
-  ArrowDown,
-  Flame,
-  Footprints,
-  Trophy,
-  Clock,
-  HeartPulse,
-  HeartPlus,
-  Blocks,
-  Edit,
-  Trash,
-} from "lucide-react";
-import { formatDistance, formatDuration, formatElevation, formatWorkoutType, formatHeartRate } from "../../utils/format";
-import type { ActivityModel } from "../../models/activity.model";
-import { ActivityBadge } from "../data-table/ActivityBadge";
-import { format } from "date-fns";
 import { Button } from "@/lib/ui/button";
+import { format } from "date-fns";
+import type { ActivityModel } from "../../models/activity.model";
+import { formatDistance, formatDuration, formatWorkoutType, formatActivityType, renderPace, formatRpe, formatPace } from "../../utils/format";
 import DeleteDialog from "./DeleteActivityDialog";
-import type { LoadingState, UpdateActivityParams, ValidationErrors } from "../../controllers/activity.controller";
-import EditActivityForm from "./EditActivityForm";
-import { useState } from "react";
+import { ActivityBadge } from "../data-table/ActivityBadge";
 
 interface ActivityDetailDialogProps {
   activity: ActivityModel | null;
   open: boolean;
-  loading: LoadingState;
-  validationErrors: ValidationErrors;
-  onOpenChange: (open: ActivityModel | null) => void;
-  updateActivity: (params: UpdateActivityParams) => Promise<void>;
+  onOpenChange: (open: boolean) => void;
+  setSelectedActivity: (activity: ActivityModel | null) => void;
   deleteActivity: (activityId: string, onClose: () => void) => Promise<void>;
 }
 
-export function ActivityDetailDialog({
-  activity,
-  open,
-  onOpenChange,
-  deleteActivity,
-  updateActivity,
-  loading,
-  validationErrors,
-}: ActivityDetailDialogProps) {
-  const [isEditing, setIsEditing] = useState(false);
-
+export function ActivityDetailDialog({ activity, open, onOpenChange, setSelectedActivity, deleteActivity }: ActivityDetailDialogProps) {
   if (!activity) return null;
 
-  const hasHRZones =
-    activity.time_in_zone_1 || activity.time_in_zone_2 || activity.time_in_zone_3 || activity.time_in_zone_4 || activity.time_in_zone_5;
-  const totalZoneTime =
-    (activity.time_in_zone_1 || 0) +
-    (activity.time_in_zone_2 || 0) +
-    (activity.time_in_zone_3 || 0) +
-    (activity.time_in_zone_4 || 0) +
-    (activity.time_in_zone_5 || 0);
+  const sourceColors = {
+    garmin: "text-blue-700 border-blue-300",
+    strava: "text-orange-700 border-orange-300",
+    manual: "text-zinc-600 border-zinc-300",
+  };
 
-  const hasTrainingEffect = activity.aerobic_training_effect || activity.anaerobic_training_effect;
+  const isTrailOrHike = activity.activity_type === "trail" || activity.activity_type === "hike";
+  const isRunning = activity.activity_type === "run" || activity.activity_type === "treadmill";
+  const hasHeartRate = activity.avg_heart_rate || activity.max_heart_rate;
+  const hasNotes = activity.notes || activity.rpe || activity.has_pain;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl! max-h-[90vh]! overflow-x-hidden! p-0">
-        <div className="bg-muted/50 p-6 pb-4">
-          <div className="flex items-center gap-2 mb-5">
+    <Dialog
+      open={open}
+      onOpenChange={() => {
+        onOpenChange(false);
+        setSelectedActivity(null);
+      }}
+    >
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <div className="flex items-center gap-2 flex-wrap">
             <ActivityBadge type={activity.activity_type} />
+            {activity.workout_type && <Badge variant="outline">{formatWorkoutType(activity.workout_type)}</Badge>}
+
+            <Badge variant="outline" className={sourceColors[activity.source] || sourceColors.manual}>
+              {activity.source.charAt(0).toUpperCase() + activity.source.slice(1)}
+            </Badge>
             {activity.is_pr && (
-              <Badge className="bg-yellow-50 text-yellow-700 border-yellow-300">
+              <Badge className="bg-yellow-50 text-yellow-700 border-yellow-200">
                 <Trophy className="w-3 h-3 mr-1" />
                 PR
               </Badge>
             )}
-            <SourceBadge source={activity.source} />
           </div>
-          <div className="flex items-center justify-between gap-3">
-            <DialogTitle className="text-2xl font-bold tracking-tight">
-              {format(new Date(activity.start_time), "EEEE, MMMM do")} - {formatWorkoutType(activity.workout_type)}
-            </DialogTitle>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => setIsEditing((prev) => !prev)}>
-                <Edit className="w-4 h-4 text-primary" />
-              </Button>
-              <DeleteDialog onDelete={() => deleteActivity(activity.id, () => onOpenChange(false))}>
-                <Button variant="destructive" size="sm">
-                  <Trash className="w-4 h-4 text-red-700" />
-                </Button>
-              </DeleteDialog>
+          <DialogTitle className="text-2xl font-bold tracking-tight">{format(new Date(activity.start_time), "EEEE, MMMM do")}</DialogTitle>
+          <div className="flex items-center text-zinc-500 text-sm gap-2 mt-1">
+            <div className="flex items-center gap-1">
+              <Calendar className="w-4 h-4" />
+              {format(new Date(activity.start_time), "h:mm a")}
             </div>
           </div>
+        </DialogHeader>
+
+        {/* Main Stats */}
+        <div className={`grid grid-cols-3 gap-4 mt-4`}>
+          <div className="space-y-1 justify-self-center">
+            <p className="text-[10px] uppercase tracking-wider text-zinc-400 font-bold text-center">Distance</p>
+            <div className="font-mono font-medium text-lg text-center">{formatDistance(activity.distance_meters || 0)}</div>
+          </div>
+          <div className="space-y-1 justify-self-center">
+            <p className="text-[10px] uppercase tracking-wider text-zinc-400 font-bold text-center">Duration</p>
+            <div className="font-mono font-medium text-lg text-center">{formatDuration(activity.duration_seconds || 0)}</div>
+          </div>
+          {isRunning && (
+            <div className="space-y-1 justify-self-center">
+              <p className="text-[10px] uppercase tracking-wider text-zinc-400 font-bold text-center">Pace (min/km)</p>
+              <div className="font-mono font-medium text-lg text-center">{renderPace(activity.distance_meters, activity.duration_seconds)}</div>
+            </div>
+          )}
+          {isTrailOrHike && (
+            <div className="space-y-1 justify-self-center">
+              <span className="text-[10px] uppercase tracking-wider text-zinc-400 font-bold text-center">Elevation</span>
+              <div className="flex items-center gap-1 font-mono font-medium text-lg">
+                <TrendingUp className="w-4 h-4 text-zinc-400" />
+                {activity.elevation_gain_meters || 0} <span className="text-xs">m</span>
+              </div>
+            </div>
+          )}
         </div>
 
-        <div className="p-5 space-y-6 max-h-[600px]! overflow-y-auto! scrollable">
-          {isEditing ? (
-            <EditActivityForm
-              activity={activity}
-              loading={loading.update}
-              validationErrors={validationErrors}
-              onCancel={() => setIsEditing(false)}
-              onSave={(params) => {
-                updateActivity({
-                  id: activity.id,
-                  ...params,
-                  onClose: () => setIsEditing(false),
-                });
-              }}
-            />
-          ) : (
-            <>
-              <div className="flex gap-4 text-center mb-8">
-                <div className="space-y-1 flex-1">
-                  <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Distance</p>
-                  <p className="text-2xl font-bold font-mono tracking-wider">{formatDistance(activity.distance_meters || 0)}</p>
-                </div>
+        {/* Pace (for running activities) */}
+        {isRunning && activity.distance_meters && activity.duration_seconds && (
+          <>
+            <Separator className="my-3" />
+            <div className="space-y-1">
+              <span className="text-[10px] uppercase tracking-wider text-zinc-400 font-bold flex items-center gap-1">
+                <Timer className="w-3 h-3" /> Pace
+              </span>
+              <div className="font-mono font-medium text-lg">{renderPace(activity.distance_meters, activity.duration_seconds)}</div>
+            </div>
+          </>
+        )}
 
-                <div className="space-y-1 flex-1">
-                  <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Time</p>
-                  <p className="text-2xl font-bold font-mono tracking-wider">{formatDuration(activity.duration_seconds || 0)}</p>
-                </div>
-                {(activity.activity_type === "run" || activity.activity_type === "treadmill") && (
-                  <div className="space-y-1 flex-1">
-                    <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Avg Pace</p>
-                    <p className="text-2xl font-bold font-mono tracking-wider">
-                      {activity.avg_speed_mps ? speedToPaceFormatted(activity.avg_speed_mps) : "-"}
-                    </p>
-                  </div>
-                )}
-                {(activity.activity_type === "trail" || activity.activity_type === "hike") && (
-                  <div className="space-y-1 flex-1">
-                    <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Elevation</p>
-                    <p className="text-2xl font-bold font-mono tracking-wider">
-                      {activity.avg_speed_mps ? speedToPaceFormatted(activity.avg_speed_mps) : "-"}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              <Separator />
-
-              <div className="flex gap-8">
-                <div className="space-y-4 flex-1">
-                  <h4 className="text-sm font-semibold flex items-center gap-2">
-                    <Zap className="w-4 h-4 text-yellow-500" /> Performance
-                  </h4>
-                  <div className="space-y-3">
-                    <StatRow
-                      label="Elapsed"
-                      value={activity.elapsed_duration_seconds ? formatDuration(activity.elapsed_duration_seconds) : "-"}
-                      icon={<Clock className="w-4 h-4" />}
-                    />
-                    <StatRow label="Avg Heart Rate" value={formatHeartRate(activity.avg_heart_rate)} icon={<HeartPulse className="w-4 h-4" />} />
-                    <StatRow label="Max Heart Rate" value={formatHeartRate(activity.max_heart_rate)} icon={<HeartPlus className="w-4 h-4" />} />
-                    {activity.activity_type === "trail" && (
-                      <StatRow
-                        label="Avg Pace"
-                        value={activity.avg_speed_mps ? (speedToPaceFormatted(activity.avg_speed_mps) ?? "-") + " /km" : "-"}
-                        icon={<Timer className="w-4 h-4" />}
-                      />
-                    )}
-                    <StatRow
-                      label="Best Pace"
-                      value={activity.max_speed_mps ? (speedToPaceFormatted(activity.max_speed_mps) ?? "-") + " /km" : "-"}
-                      icon={<Timer className="w-4 h-4" />}
-                    />
-                    <StatRow
-                      label="Avg Cadence"
-                      value={activity.avg_cadence ? `${activity.avg_cadence} spm` : "-"}
-                      icon={<Activity className="w-4 h-4" />}
-                    />
-                    <StatRow label="Steps" value={activity.steps?.toString() || "N/A"} icon={<Footprints className="w-4 h-4" />} />
-                    <StatRow label="Calories" value={activity.calories ? `${activity.calories}` : "-"} icon={<Flame className="w-4 h-4" />} />
-                  </div>
-                </div>
-
-                <div className="space-y-4 flex-1">
-                  <div className="space-y-4">
-                    <h4 className="text-sm font-semibold flex items-center gap-2">
-                      <TrendingUp className="w-4 h-4 text-blue-500" /> Environment
-                    </h4>
-                    <div className="space-y-3">
-                      <StatRow
-                        label="Elevation Gain"
-                        value={formatElevation(activity.elevation_gain_meters || 0)}
-                        icon={<TrendingUp className="w-4 h-4" />}
-                      />
-                      <StatRow
-                        label="Elevation Loss"
-                        value={formatElevation(activity.elevation_loss_meters || 0)}
-                        icon={<ArrowDown className="w-4 h-4" />}
-                      />
-
-                      <StatRow
-                        label="Avg Temperature"
-                        value={activity.avg_temperature_celsius ? `${activity.avg_temperature_celsius}°C` : "-"}
-                        icon={<Thermometer className="w-4 h-4" />}
-                      />
-                    </div>
-                  </div>
-                  {hasTrainingEffect && (
-                    <div className="space-y-4">
-                      <h4 className="text-sm font-semibold flex items-center gap-2">
-                        <Zap className="w-4 h-4 text-emerald-500" /> Training Effect
-                      </h4>
-                      <div className="space-y-3">
-                        <StatRow
-                          label="Primary Effect"
-                          value={activity?.training_effect_label ? activity?.training_effect_label.toLowerCase().replace("_", " ") : "-"}
-                          icon={<Activity className="w-4 h-4" />}
-                        />
-                        <StatRow
-                          label="Aerobic"
-                          value={activity?.aerobic_training_effect ? activity.aerobic_training_effect.toString() : "0"}
-                          icon={<Blocks className="w-4 h-4" />}
-                        />
-
-                        <StatRow
-                          label="Anaerobic"
-                          value={activity?.anaerobic_training_effect ? activity.anaerobic_training_effect.toString() : "0"}
-                          icon={<Blocks className="w-4 h-4" />}
-                        />
+        {/* Heart Rate & Temperature */}
+        {(hasHeartRate || activity.avg_temperature_celsius) && (
+          <>
+            <Separator className="my-3" />
+            <div className="grid grid-cols-2 gap-4">
+              {hasHeartRate && (
+                <div className="space-y-2">
+                  <span className="text-[10px] uppercase tracking-wider text-zinc-400 font-bold flex items-center gap-1">
+                    <Heart className="w-3 h-3 text-red-400" /> Heart Rate
+                  </span>
+                  <div className="bg-red-50/50 p-3 rounded-lg border border-red-100 space-y-1">
+                    {activity.avg_heart_rate && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-red-700/70">Avg</span>
+                        <span className="font-mono font-semibold">{activity.avg_heart_rate} bpm</span>
                       </div>
-                    </div>
-                  )}
+                    )}
+                    {activity.max_heart_rate && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-red-700/70">Max</span>
+                        <span className="font-mono font-semibold">{activity.max_heart_rate} bpm</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-
-              {hasHRZones && (
-                <>
-                  <Separator />
-                  <div className="space-y-4">
-                    <h4 className="text-sm font-semibold flex items-center gap-2">
-                      <Heart className="w-4 h-4 text-red-500" /> Heart Rate Zones
-                    </h4>
-                    <div className="space-y-2">
-                      <ZoneBar zone={1} time={activity.time_in_zone_1 || 0} total={totalZoneTime} color="bg-gray-400" />
-                      <ZoneBar zone={2} time={activity.time_in_zone_2 || 0} total={totalZoneTime} color="bg-blue-500" />
-                      <ZoneBar zone={3} time={activity.time_in_zone_3 || 0} total={totalZoneTime} color="bg-green-500" />
-                      <ZoneBar zone={4} time={activity.time_in_zone_4 || 0} total={totalZoneTime} color="bg-orange-500" />
-                      <ZoneBar zone={5} time={activity.time_in_zone_5 || 0} total={totalZoneTime} color="bg-red-500" />
+              )}
+              {activity.avg_temperature_celsius !== undefined && (
+                <div className="space-y-2">
+                  <span className="text-[10px] uppercase tracking-wider text-zinc-400 font-bold flex items-center gap-1">
+                    <Thermometer className="w-3 h-3 text-orange-400" /> Temperature
+                  </span>
+                  <div className="bg-orange-50/50 p-3 rounded-lg border border-orange-100">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-orange-700/70">Avg</span>
+                      <span className="font-mono font-semibold">{activity.avg_temperature_celsius}°C</span>
                     </div>
                   </div>
-                </>
+                </div>
               )}
+            </div>
+          </>
+        )}
 
-              <Separator />
+        {/* Notes Section */}
+        {hasNotes && (
+          <>
+            <Separator className="my-3" />
+            <section className="space-y-3">
+              <h4 className="text-[10px] uppercase tracking-wider text-zinc-400 font-bold flex items-center gap-1">
+                <FileText className="w-3 h-3" /> Notes
+              </h4>
 
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-semibold flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-orange-500" /> Post-Run Notes
-                  </h4>
-                  {activity.rpe && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground uppercase font-medium">RPE</span>
-                      <Badge variant="secondary" className="font-bold">
-                        {activity.rpe} / 5
-                      </Badge>
-                    </div>
-                  )}
-                </div>
-                <div className="bg-muted/20 rounded-lg p-4 italic text-sm text-muted-foreground min-h-16">
-                  {activity.notes || "No notes provided for this activity."}
-                </div>
+              <div className="space-y-2">
+                {activity.rpe && (
+                  <div className="flex items-center justify-between bg-zinc-50/50 p-2 rounded-lg border border-zinc-100">
+                    <span className="text-sm text-zinc-600">Effort (RPE)</span>
+                    <Badge variant="secondary" className="font-mono font-semibold">
+                      {formatRpe(activity.rpe)}
+                    </Badge>
+                  </div>
+                )}
+
+                {activity.has_pain && (
+                  <div className="flex items-center justify-between bg-amber-50/50 p-2 rounded-lg border border-amber-100">
+                    <span className="text-sm text-amber-700 flex items-center gap-1">
+                      <AlertTriangle className="w-3 h-3" /> Pain/Discomfort
+                    </span>
+                    <span className="font-medium text-amber-800 capitalize">{activity.has_pain}</span>
+                  </div>
+                )}
+
+                {activity.notes && <p className="text-sm text-zinc-600 leading-relaxed italic border-l-2 border-zinc-200 pl-3">"{activity.notes}"</p>}
               </div>
-            </>
-          )}
+            </section>
+          </>
+        )}
+
+        {/* Delete Button */}
+        <Separator className="my-3" />
+        <div className="flex justify-end">
+          <DeleteDialog onDelete={() => deleteActivity(activity.id, () => onOpenChange(false))}>
+            <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700 hover:bg-red-50">
+              <Trash className="w-4 h-4 mr-1" />
+              Delete Activity
+            </Button>
+          </DeleteDialog>
         </div>
       </DialogContent>
     </Dialog>
-  );
-}
-
-function StatRow({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) {
-  return (
-    <div className="flex items-center justify-between text-sm">
-      <div className="flex items-center gap-2 text-muted-foreground">
-        {icon}
-        <span className="capitalize">{label}</span>
-      </div>
-      <span className="text-black/80 capitalize font-mono font-semibold">{value}</span>
-    </div>
-  );
-}
-
-function SourceBadge({ source }: { source: string }) {
-  const config = {
-    garmin: { label: "Garmin", className: "text-blue-500 border-blue-200" },
-    strava: { label: "Strava", className: "text-orange-500 border-orange-200" },
-    manual: { label: "Manual", className: "text-gray-500 border-gray-200" },
-  }[source] || { label: source, className: "" };
-
-  return (
-    <Badge variant="outline" className={`text-xs uppercase ${config.className}`}>
-      {config.label}
-    </Badge>
-  );
-}
-
-function ZoneBar({ zone, time, total, color }: { zone: number; time: number; total: number; color: string }) {
-  const percentage = total > 0 ? (time / total) * 100 : 0;
-  const minutes = Math.floor(time / 60);
-  const seconds = time % 60;
-
-  return (
-    <div className="flex items-center gap-3 text-sm">
-      <span className="w-8 text-muted-foreground">Z{zone}</span>
-      <div className="flex-1 h-3 bg-muted/30 rounded-full overflow-hidden">
-        <div className={`h-full ${color} rounded-full transition-all`} style={{ width: `${percentage}%` }} />
-      </div>
-      <span className="w-16 text-right text-muted-foreground text-xs">
-        {minutes}:{seconds.toString().padStart(2, "0")}
-      </span>
-      <span className="w-10 text-right text-xs font-medium">{percentage.toFixed(0)}%</span>
-    </div>
   );
 }

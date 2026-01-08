@@ -16,15 +16,17 @@ export default function ActivityTableRow({
   day,
   index,
   loading,
-  setOpenActivityDialog,
   handleUpdateActivity,
+  setOpenActivityDialog,
+  setSelectedActivity,
 }: {
   activity: ActivityModel;
   day: DayEntry;
   index: number;
   loading: boolean;
-  setOpenActivityDialog: (activity: ActivityModel | null) => void;
+  setOpenActivityDialog: (value: boolean) => void;
   handleUpdateActivity: (params: UpdateActivityParams) => Promise<void>;
+  setSelectedActivity: (activity: ActivityModel | null) => void;
 }) {
   const [notes, setNotes] = useState<string>("");
   const [activePopover, setActivePopover] = useState<string | null>(null);
@@ -35,7 +37,10 @@ export default function ActivityTableRow({
       className={`font-mono text-sm hover:bg-muted/30 cursor-pointer ${
         index !== 0 ? "border-t-0" : "" // Remove top border for stacked activities
       }`}
-      onClick={() => setOpenActivityDialog(activity)}
+      onClick={() => {
+        setSelectedActivity(activity);
+        setOpenActivityDialog(true);
+      }}
     >
       <TableCell className="font-medium font-sans whitespace-nowrap align-top">
         {index === 0 ? format(new Date(activity.start_time), "EEE do") : ""}

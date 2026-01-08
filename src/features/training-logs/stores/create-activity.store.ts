@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { ActivityType, WorkoutType } from "@/lib/types/type";
+import type { ActivityType, Pain, WorkoutType } from "@/lib/types/type";
 
 interface CreateActivityState {
   // Wizard state
@@ -8,7 +8,7 @@ interface CreateActivityState {
 
   // Form data
   activityType: ActivityType;
-  workoutType: WorkoutType;
+  workoutType: WorkoutType | null;
   startTime: string;
   distance: string;
   hours: string;
@@ -19,12 +19,14 @@ interface CreateActivityState {
   elevation: string;
   avgHeartRate: string;
   maxHeartRate: string;
-  rpe: string;
+  rpe: number | null;
+  hasPain: boolean;
+  painLocation: Pain | null;
   notes: string;
 
   // Actions
   setActivityType: (type: ActivityType) => void;
-  setWorkoutType: (type: WorkoutType) => void;
+  setWorkoutType: (type: WorkoutType | null) => void;
   setStartTime: (time: string) => void;
   setDistance: (distance: string) => void;
   setHours: (hours: string) => void;
@@ -33,7 +35,9 @@ interface CreateActivityState {
   setElevation: (elevation: string) => void;
   setAvgHeartRate: (hr: string) => void;
   setMaxHeartRate: (hr: string) => void;
-  setRpe: (rpe: string) => void;
+  setRpe: (rpe: number | null) => void;
+  setHasPain: (hasPain: boolean) => void;
+  setPainLocation: (location: Pain | null) => void;
   setNotes: (notes: string) => void;
 
   // Navigation
@@ -63,7 +67,9 @@ const initialState = {
   elevation: "",
   avgHeartRate: "",
   maxHeartRate: "",
-  rpe: "",
+  rpe: null,
+  hasPain: false,
+  painLocation: null,
   notes: "",
 };
 
@@ -71,14 +77,17 @@ export const useCreateActivityStore = create<CreateActivityState>((set) => ({
   ...initialState,
 
   setActivityType: (activityType) => {
-    // Reset workout type when activity type changes
-    const defaultWorkoutType: Record<ActivityType, WorkoutType> = {
+    // Reset workout type when activity type changes (hike has no workout type)
+    if (activityType === "hike") {
+      set({ activityType, workoutType: null });
+      return;
+    }
+    const defaultWorkoutType: Record<Exclude<ActivityType, "hike">, WorkoutType> = {
       run: "base_run",
       trail: "base_run",
       treadmill: "base_run",
-      hike: "base_run",
       strength: "full_body",
-      cardio: "other",
+      cardio: "low_intensity",
     };
     set({ activityType, workoutType: defaultWorkoutType[activityType] });
   },
@@ -92,6 +101,8 @@ export const useCreateActivityStore = create<CreateActivityState>((set) => ({
   setAvgHeartRate: (avgHeartRate) => set({ avgHeartRate }),
   setMaxHeartRate: (maxHeartRate) => set({ maxHeartRate }),
   setRpe: (rpe) => set({ rpe }),
+  setHasPain: (hasPain) => set({ hasPain, painLocation: hasPain ? null : null }),
+  setPainLocation: (painLocation) => set({ painLocation }),
   setNotes: (notes) => set({ notes }),
 
   goNext: () =>

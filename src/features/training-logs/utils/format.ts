@@ -73,7 +73,7 @@ export function speedToPace(speedMs: number): number | null {
   return Number(paceMinPerKm.toFixed(2));
 }
 
-export function renderPace(distanceMeters: number | undefined, durationSeconds: number | undefined): string {
+export function renderPace(distanceMeters: number | undefined, durationSeconds: number | undefined, unit: boolean = false): string {
   if (!distanceMeters || !durationSeconds) {
     return "-";
   }
@@ -91,7 +91,11 @@ export function renderPace(distanceMeters: number | undefined, durationSeconds: 
   const paddedSeconds = seconds === 60 ? 0 : seconds;
   const adjustedMinutes = seconds === 60 ? minutes + 1 : minutes;
 
-  return `${adjustedMinutes}:${paddedSeconds.toString().padStart(2, "0")} min/km`;
+  if (unit) {
+    return `${adjustedMinutes}:${paddedSeconds.toString().padStart(2, "0")} min/km`;
+  } else {
+    return `${adjustedMinutes}:${paddedSeconds.toString().padStart(2, "0")}`;
+  }
 }
 
 export function formatRpe(rpe: number | undefined): string {

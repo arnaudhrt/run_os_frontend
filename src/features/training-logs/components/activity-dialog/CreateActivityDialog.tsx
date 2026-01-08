@@ -1,13 +1,15 @@
 import { Dialog, DialogContent } from "@/lib/ui/dialog";
+import { NativeSelect, NativeSelectOption } from "@/lib/ui/native-select";
+import { Checkbox } from "@/lib/ui/checkbox";
 import { Button } from "@/lib/ui/button";
 import { Input } from "@/lib/ui/input";
 import { Textarea } from "@/lib/ui/textarea";
 import { Loader2, ArrowRight, ArrowLeft, Check } from "lucide-react";
-import { activityTypes, runningWorkoutTypes, strengthWorkoutTypes, type ActivityType, type WorkoutType } from "@/lib/types/type";
+import { activityTypes, runningWorkoutTypes, strengthWorkoutTypes, cardioWorkoutTypes, pain, type WorkoutType, type Pain, rpe as rpeOptions } from "@/lib/types/type";
 import { cn } from "@/lib/utils";
 import { useCreateActivityStore } from "../../stores/create-activity.store";
 import type { CreateActivityParams } from "../../controllers/activity.controller";
-import { formatActivityType, formatWorkoutType } from "../../utils/format";
+import { formatActivityType, formatRpe, formatWorkoutType } from "../../utils/format";
 
 interface CreateActivityDialogProps {
   open: boolean;
@@ -15,14 +17,6 @@ interface CreateActivityDialogProps {
   onSubmit: (data: CreateActivityParams) => void;
   loading?: boolean;
 }
-
-const rpeOptions = [
-  { value: "1", label: "Very Easy", description: "Could do this all day" },
-  { value: "2", label: "Easy", description: "Comfortable conversation pace" },
-  { value: "3", label: "Moderate", description: "Slightly challenging" },
-  { value: "4", label: "Hard", description: "Pushing your limits" },
-  { value: "5", label: "Max Effort", description: "All out, couldn't do more" },
-];
 
 export function CreateActivityDialog({ open, onOpenChange, onSubmit, loading }: CreateActivityDialogProps) {
   const {
@@ -39,6 +33,8 @@ export function CreateActivityDialog({ open, onOpenChange, onSubmit, loading }: 
     avgHeartRate,
     maxHeartRate,
     rpe,
+    hasPain,
+    painLocation,
     notes,
     setActivityType,
     setWorkoutType,
@@ -51,14 +47,18 @@ export function CreateActivityDialog({ open, onOpenChange, onSubmit, loading }: 
     setAvgHeartRate,
     setMaxHeartRate,
     setRpe,
+    setHasPain,
+    setPainLocation,
     setNotes,
     goNext,
     goBack,
     reset,
   } = useCreateActivityStore();
 
-  const isRunningActivity = activityType === "run" || activityType === "trail" || activityType === "treadmill" || activityType === "hike";
-  const workoutTypeOptions = isRunningActivity ? runningWorkoutTypes : strengthWorkoutTypes;
+  const isRunningActivity = activityType === "run" || activityType === "trail" || activityType === "treadmill";
+  const isCardioActivity = activityType === "cardio";
+  const showWorkoutType = activityType !== "hike";
+  const workoutTypeOptions = isRunningActivity ? runningWorkoutTypes : isCardioActivity ? cardioWorkoutTypes : strengthWorkoutTypes;
 
   const totalSteps = 4;
 
@@ -72,14 +72,15 @@ export function CreateActivityDialog({ open, onOpenChange, onSubmit, loading }: 
 
     onSubmit({
       activityType,
-      workoutType,
+      ...(workoutType && { workoutType }),
       startTime: new Date(startTime).toISOString(),
       ...(distance && { distanceMeters: parseFloat(distance) * 1000 }),
       ...(durationSeconds > 0 && { durationSeconds }),
       ...(elevation && { elevationGainMeters: parseFloat(elevation) }),
       ...(avgHeartRate && { avgHeartRate: parseInt(avgHeartRate) }),
       ...(maxHeartRate && { maxHeartRate: parseInt(maxHeartRate) }),
-      ...(rpe && { rpe: parseInt(rpe) }),
+      ...(rpe && { rpe: rpe }),
+      ...(hasPain && painLocation && { hasPain: painLocation }),
       ...(notes && { notes }),
       resetForm: () => {
         reset();
@@ -126,7 +127,7 @@ export function CreateActivityDialog({ open, onOpenChange, onSubmit, loading }: 
           <div className="h-full bg-primary transition-all duration-300 ease-out" style={{ width: `${((step + 1) / totalSteps) * 100}%` }} />
         </div>
 
-        <div className="p-6 min-h-[320px] flex flex-col">
+        <div className="p-6 min-h-80 flex flex-col">
           {/* Step indicator */}
           <div className="text-xs text-muted-foreground mb-6">
             Step {step + 1} of {totalSteps}
@@ -162,22 +163,24 @@ export function CreateActivityDialog({ open, onOpenChange, onSubmit, loading }: 
                     </div>
                   </div>
 
-                  <div className="space-y-3">
-                    <h2 className="text-lg font-medium text-muted-foreground">What kind of workout?</h2>
-                    <div className="flex flex-wrap gap-2">
-                      {workoutTypeOptions.map((type) => (
-                        <Button
-                          key={type}
-                          variant="outline"
-                          size="sm"
-                          className={cn(workoutType === type && "bg-muted/50 ring-2 ring-primary ring-offset-1")}
-                          onClick={() => setWorkoutType(type as WorkoutType)}
-                        >
-                          {formatWorkoutType(type)}
-                        </Button>
-                      ))}
+                  {showWorkoutType && (
+                    <div className="space-y-3">
+                      <h2 className="text-lg font-medium text-muted-foreground">What kind of workout?</h2>
+                      <div className="flex flex-wrap gap-2">
+                        {workoutTypeOptions.map((type) => (
+                          <Button
+                            key={type}
+                            variant="outline"
+                            size="sm"
+                            className={cn(workoutType === type && "bg-muted/50 ring-2 ring-primary ring-offset-1")}
+                            onClick={() => setWorkoutType(type as WorkoutType)}
+                          >
+                            {formatWorkoutType(type)}
+                          </Button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               )}
 
@@ -201,7 +204,6 @@ export function CreateActivityDialog({ open, onOpenChange, onSubmit, loading }: 
                 <div className="space-y-5">
                   <div className="space-y-3">
                     <h2 className="text-xl font-medium">How far did you go?</h2>
-                    <p className="text-sm text-muted-foreground -mt-2">Optional - you can skip this</p>
                     <div className="flex items-center gap-3">
                       <Input
                         type="number"
@@ -227,7 +229,7 @@ export function CreateActivityDialog({ open, onOpenChange, onSubmit, loading }: 
                         value={hours}
                         onChange={(e) => setHours(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        className="h-12 w-20 text-center"
+                        className="h-12 w-full text-center"
                       />
                       <span className="text-sm text-muted-foreground">h</span>
                       <Input
@@ -238,7 +240,7 @@ export function CreateActivityDialog({ open, onOpenChange, onSubmit, loading }: 
                         value={minutes}
                         onChange={(e) => setMinutes(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        className="h-12 w-20 text-center"
+                        className="h-12 w-full text-center"
                       />
                       <span className="text-sm text-muted-foreground">m</span>
                       <Input
@@ -249,7 +251,7 @@ export function CreateActivityDialog({ open, onOpenChange, onSubmit, loading }: 
                         value={seconds}
                         onChange={(e) => setSeconds(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        className="h-12 w-20 text-center"
+                        className="h-12 w-full text-center"
                       />
                       <span className="text-sm text-muted-foreground">s</span>
                     </div>
@@ -286,8 +288,8 @@ export function CreateActivityDialog({ open, onOpenChange, onSubmit, loading }: 
 
                     {/* Heart Rate */}
                     <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Avg Heart Rate</label>
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium">Avg Heart Rate</p>
                         <div className="flex items-center gap-2">
                           <Input
                             type="number"
@@ -300,8 +302,8 @@ export function CreateActivityDialog({ open, onOpenChange, onSubmit, loading }: 
                           <span className="text-muted-foreground text-sm">bpm</span>
                         </div>
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Max Heart Rate</label>
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium">Max Heart Rate</p>
                         <div className="flex items-center gap-2">
                           <Input
                             type="number"
@@ -317,31 +319,58 @@ export function CreateActivityDialog({ open, onOpenChange, onSubmit, loading }: 
                     </div>
 
                     {/* RPE */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">How hard was it? (RPE)</label>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium">How hard was it? (RPE)</p>
                       <div className="grid gap-1.5">
-                        {rpeOptions.map((option) => (
-                          <button
-                            key={option.value}
-                            type="button"
-                            onClick={() => setRpe(rpe === option.value ? "" : option.value)}
-                            className={cn(
-                              "p-2 rounded-lg border text-left transition-all text-sm",
-                              rpe === option.value ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
-                            )}
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="font-medium">{option.label}</span>
-                              <span className="text-muted-foreground text-xs">{option.value}/5</span>
-                            </div>
-                          </button>
-                        ))}
+                        {rpeOptions.map((option) => {
+                          const value = option;
+                          return (
+                            <button
+                              key={value}
+                              type="button"
+                              onClick={() => setRpe(rpe === option ? null : value)}
+                              className={cn(
+                                "p-2 rounded-lg border text-left transition-all text-sm",
+                                rpe === option ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
+                              )}
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="font-medium">{formatRpe(option)}</span>
+                                <span className="text-muted-foreground text-xs">{option}/5</span>
+                              </div>
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
 
-                    {/* Notes */}
+                    {/* Pain/Discomfort */}
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Notes</label>
+                      <div className="flex items-center gap-2">
+                        <Checkbox id="has-pain" checked={hasPain} onCheckedChange={(checked: boolean) => setHasPain(checked)} />
+                        <label htmlFor="has-pain" className="text-sm font-medium cursor-pointer">
+                          Had pain or discomfort
+                        </label>
+                      </div>
+                      {hasPain && (
+                        <NativeSelect
+                          value={painLocation || ""}
+                          onChange={(e) => setPainLocation(e.target.value as Pain)}
+                          className="w-full"
+                        >
+                          <NativeSelectOption value="">Select location...</NativeSelectOption>
+                          {pain.map((location) => (
+                            <NativeSelectOption key={location} value={location}>
+                              {location.charAt(0).toUpperCase() + location.slice(1)}
+                            </NativeSelectOption>
+                          ))}
+                        </NativeSelect>
+                      )}
+                    </div>
+
+                    {/* Notes */}
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium">Notes</p>
                       <Textarea
                         placeholder="How did it feel? Any observations..."
                         value={notes}

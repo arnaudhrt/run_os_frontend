@@ -23,7 +23,7 @@ export interface DateRange {
 
 export interface CreateActivityParams {
   activityType: ActivityType;
-  workoutType: WorkoutType;
+  workoutType?: WorkoutType;
   startTime: string;
   distanceMeters?: number;
   durationSeconds?: number;
@@ -236,7 +236,7 @@ export const useActivityController = () => {
       const token = await getFreshIdToken();
       const body = {
         activity_type: data.activityType,
-        workout_type: data.workoutType,
+        ...(data.workoutType && { workout_type: data.workoutType }),
         start_time: data.startTime,
         source: "manual" as const,
         is_pr: data.isPr ? true : false,

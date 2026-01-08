@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/lib/ui/dialo
 import { Badge } from "@/lib/ui/badge";
 import { Separator } from "@/lib/ui/separator";
 import { Button } from "@/lib/ui/button";
-import type { PriorityType, RaceType } from "@/lib/types/type";
+import type { RacePriority, RaceType } from "@/lib/types/type";
 import type { RaceModel } from "../models/race.model";
 import type { UpdateRaceParams } from "../controllers/race.controller";
 import { Input } from "@/lib/ui/input";
@@ -62,7 +62,7 @@ export function RaceDetailsDialog({ race, open, onOpenChange, onUpdateRace, load
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <div className="flex items-center gap-2 flex-wrap">
-            <Badge variant="outline" className={priorityColors[race.priority as PriorityType]}>
+            <Badge variant="outline" className={priorityColors[race.priority as RacePriority]}>
               {race.priority === 1 && "Primary Race"}
               {race.priority === 2 && "Secondary Race"}
               {race.priority === 3 && "Training Race"}
