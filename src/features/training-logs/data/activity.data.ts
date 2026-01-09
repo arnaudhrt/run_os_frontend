@@ -1,21 +1,5 @@
 import type { ActivityModel, ActivitiesResponse, CreateActivityModel, UpdateActivityModel } from "../models/activity.model";
 
-export async function syncGarmin({ token }: { token: string }): Promise<void> {
-  const url = new URL(`${import.meta.env.VITE_API_URL}/v1/garmin/sync`);
-
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (!response.ok) {
-    console.error(response);
-    throw new Error("Error syncing Garmin, check logs for more details");
-  }
-}
-
 export async function getAllActivities({ token }: { token: string }): Promise<ActivitiesResponse> {
   const url = new URL(`${import.meta.env.VITE_API_URL}/v1/activities`);
 

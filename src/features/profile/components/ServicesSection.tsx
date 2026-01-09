@@ -1,4 +1,3 @@
-import { getFreshIdToken } from "@/lib/firebase/token";
 import { Button } from "@/lib/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/lib/ui/card";
 import { Separator } from "@/lib/ui/separator";
@@ -6,23 +5,20 @@ import { Link2 } from "lucide-react";
 import { useEffect } from "react";
 import toast from "react-hot-toast";
 import { useSearchParams } from "react-router-dom";
+import GarminDisconnectDialog from "./GarminDiconnectDialog";
+import { connectStrava } from "../data/strava.data";
 
-export default function ServicesSection({ stravaConnection, garminConnection }: { stravaConnection: boolean; garminConnection: boolean }) {
+interface Props {
+  stravaConnection: boolean;
+  garminConnection: boolean;
+  setGarminDialogOpen: (open: boolean) => void;
+  onGarminDisconnect: () => Promise<void>;
+}
+
+export default function ServicesSection({ stravaConnection, garminConnection, onGarminDisconnect, setGarminDialogOpen }: Props) {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const result = searchParams.get("strava");
-  const connectStrava = async () => {
-    const token = await getFreshIdToken();
-    const params = new URLSearchParams({
-      client_id: import.meta.env.VITE_STRAVA_CLIENT_ID,
-      redirect_uri: `${import.meta.env.VITE_API_URL}/v1/strava/callback`,
-      response_type: "code",
-      scope: "read,activity:read_all",
-      state: token,
-    });
-
-    window.location.href = `https://www.strava.com/oauth/authorize?${params}`;
-  };
 
   useEffect(() => {
     if (result === "success") {
@@ -76,13 +72,15 @@ export default function ServicesSection({ stravaConnection, garminConnection }: 
             </div>
           </div>
           {garminConnection ? (
-            <Button variant="outline" size="sm" className="group gap-1 h-7">
-              <Link2 className="size-4 group-hover:hidden" />
-              <span className="group-hover:hidden">Connected</span>
-              <span className="hidden group-hover:inline text-destructive">Disconnect</span>
-            </Button>
+            <GarminDisconnectDialog onDisconnect={() => onGarminDisconnect()}>
+              <Button variant="outline" size="sm" className="group gap-1 h-7">
+                <Link2 className="size-4 group-hover:hidden" />
+                <span className="group-hover:hidden">Connected</span>
+                <span className="hidden group-hover:inline text-destructive">Disconnect</span>
+              </Button>
+            </GarminDisconnectDialog>
           ) : (
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={() => setGarminDialogOpen(true)}>
               Connect
             </Button>
           )}

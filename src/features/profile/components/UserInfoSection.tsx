@@ -1,22 +1,12 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/lib/ui/avatar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/lib/ui/card";
 import { Separator } from "@/lib/ui/separator";
-import { Mail, Loader2, Edit } from "lucide-react";
+import { Mail, Edit } from "lucide-react";
 import { format } from "date-fns";
 import type { UserModel } from "@/features/auth/models/auth.model";
 import { Button } from "@/lib/ui/button";
 
-export default function UserInfoSection({ user }: { user: UserModel | null }) {
-  if (!user) {
-    return (
-      <Card className="shadow-none">
-        <div className="flex justify-center items-center gap-2">
-          <Loader2 className="size-4 animate-spin" />
-          <p className="text-sm font-medium">Loading my profile...</p>
-        </div>
-      </Card>
-    );
-  }
+export default function UserInfoSection({ user }: { user: UserModel }) {
   const getInitials = (name: string | null | undefined) => {
     if (!name) return "U";
     return name

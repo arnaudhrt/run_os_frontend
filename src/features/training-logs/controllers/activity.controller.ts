@@ -3,10 +3,11 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { handleError } from "@/lib/errors/clientErrors.handler";
 import { getFreshIdToken } from "@/lib/firebase/token";
-import { createActivity, deleteActivity, getAllActivities, syncGarmin, updateActivity } from "../data/activity.data";
+import { createActivity, deleteActivity, getAllActivities, updateActivity } from "../data/activity.data";
 import type { ActivityType, WorkoutType } from "@/lib/types/type";
 import { validateCreateActivityFields, validateUpdateActivityFields } from "../validations/activity.validation";
 import { structureActivitiesLog } from "../utils/format";
+import { syncGarminActivities } from "@/features/profile/data/gamin.data";
 
 export interface LoadingState {
   syncGarmin: boolean;
@@ -73,12 +74,12 @@ export const useActivityController = () => {
     delete: false,
   });
 
-  const handleSyncGarmin = async (): Promise<void> => {
+  const handleSyncGarmin = async (params?: { startDate?: string; endDate?: string }): Promise<void> => {
     setLoading((prev) => ({ ...prev, syncGarmin: true }));
     setApiError(null);
     try {
       const token = await getFreshIdToken();
-      await syncGarmin({ token });
+      await syncGarminActivities({ token, startDate: params?.startDate, endDate: params?.endDate });
       toast.success("Garmin synced successfully");
       await handleFetchAllActivities();
     } catch (err) {

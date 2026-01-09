@@ -3,9 +3,14 @@ import ServicesSection from "../components/ServicesSection";
 import DangerSection from "../components/DangerSection";
 import UserInfoSection from "../components/UserInfoSection";
 import LoaderScreen from "@/lib/components/LoaderScreen";
+import GarminCredentialsDialog from "../components/GarminCredentialsDialog";
+import { useState } from "react";
+import { useGarminController } from "../controllers/garmin.controller";
 
 export default function ProfilePage() {
   const { dbUser } = useAuthStore();
+  const { handleGarminConnection, handleGarminDisconnect, loading: garminLoading, validationErrors: garminValidationErrors } = useGarminController();
+  const [open, setOpen] = useState(false);
 
   if (!dbUser) {
     return <LoaderScreen />;
@@ -23,9 +28,21 @@ export default function ProfilePage() {
         </div>
 
         <UserInfoSection user={dbUser} />
-        <ServicesSection stravaConnection={stravaConnection} garminConnection={garminConnection} />
+        <ServicesSection
+          stravaConnection={stravaConnection}
+          garminConnection={garminConnection}
+          setGarminDialogOpen={setOpen}
+          onGarminDisconnect={handleGarminDisconnect}
+        />
         <DangerSection />
       </div>
+      <GarminCredentialsDialog
+        open={open}
+        onOpenChange={setOpen}
+        loading={garminLoading.connect}
+        validationErrors={garminValidationErrors}
+        onLogin={handleGarminConnection}
+      />
     </section>
   );
 }

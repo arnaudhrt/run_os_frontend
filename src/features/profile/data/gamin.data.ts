@@ -1,4 +1,4 @@
-export async function connectToGarmin({ token }: { token: string }) {
+export async function connectToGarmin({ token, email, password }: { token: string; email: string; password: string }): Promise<void> {
   const url = new URL(`${import.meta.env.VITE_API_URL}/v1/garmin/connect`);
 
   const response = await fetch(url, {
@@ -7,6 +7,10 @@ export async function connectToGarmin({ token }: { token: string }) {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
+    body: JSON.stringify({
+      email,
+      password,
+    }),
   });
 
   if (!response.ok) {
@@ -18,7 +22,7 @@ export async function connectToGarmin({ token }: { token: string }) {
   return responseData.data;
 }
 
-export async function disconnectFromGarmin({ token }: { token: string }) {
+export async function disconnectFromGarmin({ token }: { token: string }): Promise<void> {
   const url = new URL(`${import.meta.env.VITE_API_URL}/v1/garmin/disconnect`);
 
   const response = await fetch(url, {
@@ -38,8 +42,23 @@ export async function disconnectFromGarmin({ token }: { token: string }) {
   return responseData.data;
 }
 
-export async function syncGarminActivities({ token }: { token: string }): Promise<void> {
+export async function syncGarminActivities({
+  token,
+  startDate,
+  endDate,
+}: {
+  token: string;
+  startDate?: string;
+  endDate?: string;
+}): Promise<void> {
   const url = new URL(`${import.meta.env.VITE_API_URL}/v1/garmin/sync`);
+
+  if (startDate) {
+    url.searchParams.set("start_date", startDate);
+  }
+  if (endDate) {
+    url.searchParams.set("end_date", endDate);
+  }
 
   const response = await fetch(url, {
     method: "POST",
