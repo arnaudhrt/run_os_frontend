@@ -1,4 +1,4 @@
-import { Calendar, TrendingUp, Heart, Trophy, Trash, Edit, Smile, SunSnow, Notebook, Check } from "lucide-react";
+import { Calendar, TrendingUp, Heart, Trophy, Trash, Edit, Smile, SunSnow, Notebook, Check, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/lib/ui/dialog";
 import { Badge } from "@/lib/ui/badge";
 import { Separator } from "@/lib/ui/separator";
@@ -29,9 +29,77 @@ interface ActivityDetailDialogProps {
 
 export function ActivityDetailDialog({ activity, open, onOpenChange, setSelectedActivity, deleteActivity, updateActivity, loadingUpdate, loadingDelete }: ActivityDetailDialogProps) {
   const [edit, setEdit] = useState<string>("");
-  const [editAvgHeartRate, setEditAvgHeartRate] = useState<number | null>(activity?.avg_heart_rate ? activity.avg_heart_rate : null);
-  const [editMaxHeartRate, setEditMaxHeartRate] = useState<number | null>(activity?.max_heart_rate ? activity.max_heart_rate : null);
   const [openUpdateDialog, setOpenUpdateDialog] = useState(false);
+
+  // Heart Rate edit state
+  const [editAvgHeartRate, setEditAvgHeartRate] = useState<number | null>(null);
+  const [editMaxHeartRate, setEditMaxHeartRate] = useState<number | null>(null);
+
+  // Feelings edit state
+  const [editRpe, setEditRpe] = useState<number | null>(null);
+  const [editHasPain, setEditHasPain] = useState<string | null>(null);
+
+  // Environment edit state
+  const [editAvgTemperature, setEditAvgTemperature] = useState<number | null>(null);
+
+  // Notes edit state
+  const [editNotes, setEditNotes] = useState<string | null>(null);
+
+  // Initialize edit values when entering edit mode
+  const startEdit = (section: string) => {
+    setEdit(section);
+    if (section === "hr") {
+      setEditAvgHeartRate(activity?.avg_heart_rate ?? null);
+      setEditMaxHeartRate(activity?.max_heart_rate ?? null);
+    } else if (section === "feelings") {
+      setEditRpe(activity?.rpe ?? null);
+      setEditHasPain(activity?.has_pain ?? null);
+    } else if (section === "env") {
+      setEditAvgTemperature(activity?.avg_temperature_celsius ?? null);
+    } else if (section === "notes") {
+      setEditNotes(activity?.notes ?? null);
+    }
+  };
+
+  // Save handlers for each section
+  const saveHeartRate = async () => {
+    if (!activity) return;
+    await updateActivity({
+      id: activity.id,
+      avgHeartRate: editAvgHeartRate ?? undefined,
+      maxHeartRate: editMaxHeartRate ?? undefined,
+      onClose: () => setEdit(""),
+    });
+  };
+
+  const saveFeelings = async () => {
+    if (!activity) return;
+    await updateActivity({
+      id: activity.id,
+      rpe: editRpe ?? undefined,
+      hasPain: editHasPain ?? undefined,
+      onClose: () => setEdit(""),
+    });
+  };
+
+  const saveEnvironment = async () => {
+    if (!activity) return;
+    await updateActivity({
+      id: activity.id,
+      avgTemperatureCelsius: editAvgTemperature ?? undefined,
+      onClose: () => setEdit(""),
+    });
+  };
+
+  const saveNotes = async () => {
+    if (!activity) return;
+    await updateActivity({
+      id: activity.id,
+      notes: editNotes ?? undefined,
+      onClose: () => setEdit(""),
+    });
+  };
+
   // TODO: Pass loadingDelete to DeleteDialog when it supports loading state
   void loadingDelete;
   if (!activity) return null;
@@ -110,11 +178,11 @@ export function ActivityDetailDialog({ activity, open, onOpenChange, setSelected
                 <Heart className="w-3 h-3 text-red-600" /> Heart Rate
               </h4>
               {edit === "hr" ? (
-                <Button variant="ghost" size="sm" className="text-xs h-6 p-1" onClick={() => setEdit("")}>
-                  <Check className="size-3 text-muted-foreground" /> Save
+                <Button variant="ghost" size="sm" className="text-xs h-6 p-1" onClick={saveHeartRate} disabled={loadingUpdate}>
+                  {loadingUpdate ? <Loader2 className="size-3 animate-spin" /> : <><Check className="size-3 text-muted-foreground" /> Save</>}
                 </Button>
               ) : (
-                <Button variant="ghost" size="icon" onClick={() => setEdit("hr")}>
+                <Button variant="ghost" size="icon" onClick={() => startEdit("hr")}>
                   <Edit className="size-3 text-muted-foreground" />
                 </Button>
               )}
@@ -164,11 +232,11 @@ export function ActivityDetailDialog({ activity, open, onOpenChange, setSelected
                 <Smile className="w-3 h-3 text-slate-600" /> Feelings
               </h4>
               {edit === "feelings" ? (
-                <Button variant="ghost" size="sm" className="text-xs h-6 p-1" onClick={() => setEdit("")}>
-                  <Check className="size-3 text-muted-foreground" /> Save
+                <Button variant="ghost" size="sm" className="text-xs h-6 p-1" onClick={saveFeelings} disabled={loadingUpdate}>
+                  {loadingUpdate ? <Loader2 className="size-3 animate-spin" /> : <><Check className="size-3 text-muted-foreground" /> Save</>}
                 </Button>
               ) : (
-                <Button variant="ghost" size="icon" onClick={() => setEdit("feelings")}>
+                <Button variant="ghost" size="icon" onClick={() => startEdit("feelings")}>
                   <Edit className="size-3 text-muted-foreground" />
                 </Button>
               )}
@@ -178,7 +246,7 @@ export function ActivityDetailDialog({ activity, open, onOpenChange, setSelected
               <div className="flex items-center justify-between">
                 <span className="text-sm text-slate-700">Effort (RPE):</span>
                 {edit === "feelings" ? (
-                  <Select defaultValue={activity.rpe?.toString() ?? ""}>
+                  <Select value={editRpe?.toString() ?? ""} onValueChange={(value) => setEditRpe(Number(value))}>
                     <SelectTrigger size="sm" className="h-6 w-auto text-xs">
                       <SelectValue placeholder="-" />
                     </SelectTrigger>
@@ -197,7 +265,7 @@ export function ActivityDetailDialog({ activity, open, onOpenChange, setSelected
               <div className="flex items-center justify-between">
                 <span className="text-sm text-slate-700">Pain / Discomfort:</span>
                 {edit === "feelings" ? (
-                  <Select defaultValue={activity.has_pain ?? ""}>
+                  <Select value={editHasPain ?? ""} onValueChange={(value) => setEditHasPain(value)}>
                     <SelectTrigger size="sm" className="h-6 w-auto text-xs">
                       <SelectValue placeholder="None" />
                     </SelectTrigger>
@@ -224,11 +292,11 @@ export function ActivityDetailDialog({ activity, open, onOpenChange, setSelected
               <SunSnow className="w-3 h-3 text-green-600" /> Environment
             </h4>
             {edit === "env" ? (
-              <Button variant="ghost" size="sm" className="text-xs h-6 p-1" onClick={() => setEdit("")}>
-                <Check className="size-3 text-muted-foreground" /> Save
+              <Button variant="ghost" size="sm" className="text-xs h-6 p-1" onClick={saveEnvironment} disabled={loadingUpdate}>
+                {loadingUpdate ? <Loader2 className="size-3 animate-spin" /> : <><Check className="size-3 text-muted-foreground" /> Save</>}
               </Button>
             ) : (
-              <Button variant="ghost" size="icon" onClick={() => setEdit("env")}>
+              <Button variant="ghost" size="icon" onClick={() => startEdit("env")}>
                 <Edit className="size-3 text-muted-foreground" />
               </Button>
             )}
@@ -239,7 +307,13 @@ export function ActivityDetailDialog({ activity, open, onOpenChange, setSelected
               <span className="text-sm text-slate-700">Avg. Temperature:</span>
               {edit === "env" ? (
                 <div className="flex gap-1 items-center">
-                  <Input type="number" placeholder="Temp" value={activity.avg_temperature_celsius ?? ""} className="max-w-20 h-6" />
+                  <Input
+                    type="number"
+                    placeholder="Temp"
+                    value={editAvgTemperature ?? ""}
+                    onChange={(e) => setEditAvgTemperature(e.target.value ? Number(e.target.value) : null)}
+                    className="max-w-20 h-6"
+                  />
                   <span className="font-mono font-bold text-sm">°C</span>
                 </div>
               ) : (
@@ -263,11 +337,11 @@ export function ActivityDetailDialog({ activity, open, onOpenChange, setSelected
               <Notebook className="w-3 h-3 text-blue-600" /> Notes
             </h4>
             {edit === "notes" ? (
-              <Button variant="ghost" size="sm" className="text-xs h-6 p-1" onClick={() => setEdit("")}>
-                <Check className="size-3 text-muted-foreground" /> Save
+              <Button variant="ghost" size="sm" className="text-xs h-6 p-1" onClick={saveNotes} disabled={loadingUpdate}>
+                {loadingUpdate ? <Loader2 className="size-3 animate-spin" /> : <><Check className="size-3 text-muted-foreground" /> Save</>}
               </Button>
             ) : (
-              <Button variant="ghost" size="icon" onClick={() => setEdit("notes")}>
+              <Button variant="ghost" size="icon" onClick={() => startEdit("notes")}>
                 <Edit className="size-3 text-muted-foreground" />
               </Button>
             )}
@@ -275,7 +349,11 @@ export function ActivityDetailDialog({ activity, open, onOpenChange, setSelected
 
           <div className="bg-slate-50/50 p-3 rounded-lg border space-y-2">
             {edit === "notes" ? (
-              <Textarea placeholder="Add notes about this activity..." value={activity.notes ?? ""} />
+              <Textarea
+                placeholder="Add notes about this activity..."
+                value={editNotes ?? ""}
+                onChange={(e) => setEditNotes(e.target.value)}
+              />
             ) : (
               <p className="text-sm">{activity.notes || "No notes provided for this activity."}</p>
             )}

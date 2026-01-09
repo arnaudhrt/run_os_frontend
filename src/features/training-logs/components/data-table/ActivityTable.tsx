@@ -3,7 +3,7 @@ import { formatDistance, formatDuration, formatElevation } from "../../utils/for
 import type { ActivityModel, DayEntry, WeekEntry } from "../../models/activity.model";
 import { Mountain, Timer, Map } from "lucide-react";
 import { ActivityDetailDialog } from "../activity-dialog/ActivityDetailDialog";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { LoadingState, UpdateActivityParams, ValidationErrors } from "../../controllers/activity.controller";
 import ActivityTableRow from "./ActivityTableRow";
 import TableHeaderBloc from "./ActivityTableHeader";
@@ -24,7 +24,21 @@ export default function ActivityTable({
   validationErrors: ValidationErrors;
 }) {
   const [openActivityDialog, setOpenActivityDialog] = useState(false);
-  const [selectedActivity, setSelectedActivity] = useState<ActivityModel | null>(null);
+  const [selectedActivityId, setSelectedActivityId] = useState<string | null>(null);
+
+  // Compute selected activity from days to get fresh data after updates
+  const selectedActivity = useMemo(() => {
+    if (!selectedActivityId) return null;
+    for (const day of days) {
+      const activity = day.activities?.find((a) => a.id === selectedActivityId);
+      if (activity) return activity;
+    }
+    return null;
+  }, [selectedActivityId, days]);
+
+  const setSelectedActivity = (activity: ActivityModel | null) => {
+    setSelectedActivityId(activity?.id ?? null);
+  };
 
   if (!week || !days) return null;
   return (

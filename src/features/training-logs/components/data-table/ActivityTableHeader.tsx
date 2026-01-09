@@ -22,7 +22,7 @@ export default function TableHeaderBloc() {
         </TableHead>
         <TableHead className="text-right font-bold text-[10px] tracking-widest uppercase">Avg/Max HR</TableHead>
         <TableHead className="text-right font-bold text-[10px] tracking-widest uppercase">Elev</TableHead>
-        <TableHead className="text-right font-bold text-[10px] tracking-widest uppercase">RPE</TableHead>
+        <TableHead className="text-right font-bold text-[10px] tracking-widest uppercase min-w-20">RPE</TableHead>
         <TableHead className="text-center font-bold text-[10px] tracking-widest uppercase">Notes</TableHead>
       </TableRow>
     </TableHeader>

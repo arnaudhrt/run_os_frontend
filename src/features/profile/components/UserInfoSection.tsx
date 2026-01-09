@@ -48,14 +48,18 @@ export default function UserInfoSection({ user }: { user: UserModel | null }) {
       </CardHeader>
       <CardContent className="space-y-4">
         <Separator />
-        <div className="space-y-3">
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Gender:</span>
+            <span className="text-sm flex items-center gap-1.5">{"Male ♂"}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Birthday:</span>
+            <span className="text-sm flex items-center gap-1.5">{format(new Date(), "MMM dd yyyy")}</span>
+          </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Member since</span>
             <span className="text-sm flex items-center gap-1.5">{format(user.created_at, "MMM dd yyyy")}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Last sign in</span>
-            <span className="text-sm">{format(user.updated_at, "MMM dd yyyy")}</span>
           </div>
         </div>
       </CardContent>

@@ -7,7 +7,7 @@ import { FileText, Plus, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/lib/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/lib/ui/popover";
-import { rpe, runningWorkoutTypes, strengthWorkoutTypes } from "@/lib/types/type";
+import { cardioWorkoutTypes, rpe, runningWorkoutTypes, strengthWorkoutTypes, type ActivityType } from "@/lib/types/type";
 import { Textarea } from "@/lib/ui/textarea";
 import type { UpdateActivityParams } from "../../controllers/activity.controller";
 
@@ -30,7 +30,12 @@ export default function ActivityTableRow({
 }) {
   const [notes, setNotes] = useState<string>("");
   const [activePopover, setActivePopover] = useState<string | null>(null);
-  const workoutTypeOptions = activity.activity_type === "run" ? runningWorkoutTypes : strengthWorkoutTypes;
+
+  const renderWorkoutType = (activityType: ActivityType) => {
+    if (activityType === "run" || activityType === "treadmill" || activityType === "trail") return runningWorkoutTypes;
+    if (activityType === "strength") return strengthWorkoutTypes;
+    return cardioWorkoutTypes;
+  };
   return (
     <TableRow
       key={`${day.date}-${activity.id || index}`}
@@ -52,43 +57,47 @@ export default function ActivityTableRow({
         <ActivityBadge type={activity.activity_type} />
       </TableCell>
 
-      <TableCell>
-        {!activity.workout_type ? (
-          <Popover open={activePopover === `type-${activity.id}`} onOpenChange={(open) => setActivePopover(open ? `type-${activity.id}` : null)}>
-            <PopoverTrigger asChild onClick={(e) => e.stopPropagation()}>
-              <Button variant="outline" size="xs">
-                {loading && activePopover === `type-${activity.id}` ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <Plus className="w-4 h-4 text-primary" />
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="gap-0 max-w-40">
-              {workoutTypeOptions.map((el, i) => (
-                <div
-                  key={i}
-                  className="rounded-md py-1 pr-8 pl-1.5 text-sm hover:bg-accent"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleUpdateActivity({
-                      workoutType: el,
-                      id: activity.id,
-                      onClose: () => {
-                        setActivePopover(null);
-                      },
-                    });
-                  }}
-                >
-                  {formatWorkoutType(el)}
-                </div>
-              ))}
-            </PopoverContent>
-          </Popover>
-        ) : (
-          formatWorkoutType(activity.workout_type)
-        )}
-      </TableCell>
+      {activity.activity_type !== "hike" ? (
+        <TableCell>
+          {!activity.workout_type ? (
+            <Popover open={activePopover === `type-${activity.id}`} onOpenChange={(open) => setActivePopover(open ? `type-${activity.id}` : null)}>
+              <PopoverTrigger asChild onClick={(e) => e.stopPropagation()}>
+                <Button variant="outline" size="xs">
+                  {loading && activePopover === `type-${activity.id}` ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <Plus className="w-4 h-4 text-primary" />
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="gap-0 max-w-40">
+                {renderWorkoutType(activity.activity_type).map((el, i) => (
+                  <div
+                    key={i}
+                    className="rounded-md py-1 pr-8 pl-1.5 text-sm hover:bg-accent"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleUpdateActivity({
+                        workoutType: el,
+                        id: activity.id,
+                        onClose: () => {
+                          setActivePopover(null);
+                        },
+                      });
+                    }}
+                  >
+                    {formatWorkoutType(el)}
+                  </div>
+                ))}
+              </PopoverContent>
+            </Popover>
+          ) : (
+            formatWorkoutType(activity.workout_type)
+          )}
+        </TableCell>
+      ) : (
+        <TableCell>-</TableCell>
+      )}
 
       <TableCell className="text-right">{formatDistance(activity.distance_meters || 0)}</TableCell>
       <TableCell className="text-right">{formatDuration(activity.duration_seconds || 0)}</TableCell>

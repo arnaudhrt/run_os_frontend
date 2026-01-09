@@ -1,5 +1,4 @@
 import { getFreshIdToken } from "@/lib/firebase/token";
-import { Badge } from "@/lib/ui/badge";
 import { Button } from "@/lib/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/lib/ui/card";
 import { Separator } from "@/lib/ui/separator";
@@ -53,10 +52,11 @@ export default function ServicesSection({ stravaConnection, garminConnection }: 
             </div>
           </div>
           {stravaConnection ? (
-            <Badge variant="secondary" className="gap-1 h-7 px-2.5 flex items-center justify-center">
-              <Link2 className="size-4" />
-              Connected
-            </Badge>
+            <Button variant="outline" size="sm" className="group gap-1 h-7">
+              <Link2 className="size-4 group-hover:hidden" />
+              <span className="group-hover:hidden">Connected</span>
+              <span className="hidden group-hover:inline text-destructive">Disconnect</span>
+            </Button>
           ) : (
             <Button variant="outline" size="sm" onClick={() => connectStrava()}>
               Connect
@@ -76,10 +76,11 @@ export default function ServicesSection({ stravaConnection, garminConnection }: 
             </div>
           </div>
           {garminConnection ? (
-            <Badge variant="secondary" className="gap-1">
-              <Link2 className="size-3" />
-              Connected
-            </Badge>
+            <Button variant="outline" size="sm" className="group gap-1 h-7">
+              <Link2 className="size-4 group-hover:hidden" />
+              <span className="group-hover:hidden">Connected</span>
+              <span className="hidden group-hover:inline text-destructive">Disconnect</span>
+            </Button>
           ) : (
             <Button variant="outline" size="sm">
               Connect
